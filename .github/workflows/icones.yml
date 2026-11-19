@@ -1,0 +1,52 @@
+name: Gerar ícones do app
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/icones.yml']
+permissions:
+  contents: write
+jobs:
+  icones:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desenhar os ícones
+        run: |
+          python3 - <<'PY'
+          import zlib, struct
+          def png(nome, tam, escala):
+              fundo, laranja = (16, 16, 16), (255, 105, 0)
+              px = [[fundo] * tam for _ in range(tam)]
+              cx = cy = tam / 2
+              lar = tam * escala
+              alt = lar * 0.5
+              def ret(x0, y0, x1, y1, r):
+                  X0, X1, Y0, Y1, rr = cx + x0 * lar, cx + x1 * lar, cy + y0 * alt, cy + y1 * alt, r * tam
+                  for y in range(int(Y0), int(Y1) + 1):
+                      for x in range(int(X0), int(X1) + 1):
+                          if 0 <= x < tam and 0 <= y < tam:
+                              dx = max(X0 + rr - x, 0, x - (X1 - rr))
+                              dy = max(Y0 + rr - y, 0, y - (Y1 - rr))
+                              if dx * dx + dy * dy <= rr * rr:
+                                  px[y][x] = laranja
+              ret(-0.30, -0.09, 0.30, 0.09, 0.01)
+              ret(-0.42, -0.80, -0.30, 0.80, 0.02)
+              ret(0.30, -0.80, 0.42, 0.80, 0.02)
+              ret(-0.50, -0.55, -0.42, 0.55, 0.015)
+              ret(0.42, -0.55, 0.50, 0.55, 0.015)
+              cru = b''.join(b'\x00' + bytes(c for p in linha for c in p) for linha in px)
+              def bloco(t, d):
+                  return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+              dados = b'\x89PNG\r\n\x1a\n' + bloco(b'IHDR', struct.pack('>IIBBBBB', tam, tam, 8, 2, 0, 0, 0)) + bloco(b'IDAT', zlib.compress(cru, 9)) + bloco(b'IEND', b'')
+              open(nome, 'wb').write(dados)
+          png('icon-192.png', 192, 0.78)
+          png('icon-512.png', 512, 0.78)
+          png('icon-maskable-512.png', 512, 0.58)
+          PY
+      - name: Salvar no repositório
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add icon-*.png
+          git commit -m "Adicionar ícones do app" || echo "Nada a mudar"
+          git push
