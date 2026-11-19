@@ -1,6 +1,7 @@
 /* Meu Treino: funciona sem internet e busca atualizações quando há conexão */
-const CACHE = 'meu-treino-3.2';
-const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
+const CACHE = 'meu-treino-4.0';
+const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.allSettled(ARQUIVOS.map(a => c.add(a)))).then(() => self.skipWaiting()));
 });
@@ -12,9 +13,12 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin === location.origin) {
+    /* o app: rede primeiro, para pegar atualizações; sem internet, a cópia guardada */
     e.respondWith(fetch(req).then(r => { const copia = r.clone(); caches.open(CACHE).then(c => c.put(req, copia)); return r; })
       .catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('./index.html'))));
-  } else if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
+  } else if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname) || url.hostname === 'cdn.jsdelivr.net') {
+    /* fontes e biblioteca de login: a cópia guardada primeiro */
     e.respondWith(caches.match(req).then(r => r || fetch(req).then(resp => { const copia = resp.clone(); caches.open(CACHE).then(c => c.put(req, copia)); return resp; })));
   }
+  /* chamadas ao Supabase (login e dados) nunca passam pelo cache */
 });
