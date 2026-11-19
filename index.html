@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#101010">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
@@ -284,7 +285,10 @@ body.foco #toast{ bottom:calc(130px + env(safe-area-inset-bottom,0px)); }
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '3.2';
+const VERSAO_APP = '4.0';
+const SUPA_URL = 'https://gspcitfcvypdchovnhve.supabase.co';
+const SUPA_CHAVE = 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4';
+const VERSAO_TERMOS = '0.1';
 const PROGRAMAS = {
   principal: {
     versao: '2.0', nome: 'Superior e inferior', dias: 4, duracao: 'cerca de 55 min', resumo: 'Segunda, terça, quarta e fim de semana. Cada músculo 2× por semana.', ordem: ['A', 'B', 'C', 'D'],
@@ -360,10 +364,12 @@ const NOMES_EXTRAS = {};
 /* ================= utilidades ================= */
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let USUARIO = null; /* id do usuário logado: separa os dados de cada pessoa neste aparelho */
+const chaveLS = k => (USUARIO && k.startsWith('mt') ? `${k}@${USUARIO}` : k);
 const LS = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
-  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  get(k, d) { try { const v = localStorage.getItem(chaveLS(k)); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(chaveLS(k), JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(chaveLS(k)); } catch (e) {} }
 };
 const num = v => { if (v === '' || v == null) return null; const n = Number(String(v).replace(',', '.')); return Number.isFinite(n) ? n : null; };
 const numBR = v => (v == null ? '' : String(v).replace('.', ','));
@@ -400,20 +406,17 @@ function fmtSets(sets) {
 }
 
 /* ================= estado e dados ================= */
-function carregarDocs() {
-  let d = LS.get('mt2_docs', null);
-  if (!d) { d = {}; (LS.get('mt_sessoes', []) || []).forEach(s => { if (s && s.id) d[s.id] = s; }); }
-  return d;
-}
+function carregarDocs() { return LS.get('mt2_docs', {}) || {}; }
+function dadosLegados() { try { const d = JSON.parse(localStorage.getItem('mt2_docs') || 'null'); return d && typeof d === 'object' && Object.keys(d).length ? d : null; } catch (e) { return null; } }
 const S = {
-  page: 'home', docs: carregarDocs(), atual: LS.get('mt_atual', null),
-  pend: new Set(LS.get('mt_pend', [])), apagados: new Set(LS.get('mt_apagados', [])),
+  page: 'home', docs: {}, atual: null, pend: new Set(), apagados: new Set(),
+  auth: { estado: 'carregando', tela: 'entrar', msg: '', erro: '', email: '', user: null, papel: null }, consentido: false, trocarSenha: false,
   modo: 'conectando', busca: '', exForca: null, periodo: 14, pergunta: '', relVisivel: false,
   cal: null, diaSel: null, aberto: null, pularOnb: false, editarPerfil: false,
   ia: { texto: '', estado: 'idle', ctl: null, nota: '' }, fotoOk: false,
   rec: { passo: 1, escolha: 'principal' }, notas: new Set()
 };
-let coll = null, downloads = null, sampleFn = null, assetsNs = null;
+let coll = null, downloads = null, sampleFn = null, assetsNs = null, sb = null;
 const salvarPend = () => LS.set('mt_pend', [...S.pend]);
 const salvarApagados = () => LS.set('mt_apagados', [...S.apagados]);
 const salvarCache = () => LS.set('mt2_docs', S.docs);
@@ -425,12 +428,25 @@ const FotosLocais = {
   db: null, urls: {},
   abrir() { return this.db ? Promise.resolve(this.db) : new Promise((res, rej) => { const r = indexedDB.open('meu-treino-fotos', 1); r.onupgradeneeded = () => r.result.createObjectStore('fotos'); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); }); },
   async salvar(blob) { const db = await this.abrir(), id = 'f' + Date.now(); await new Promise((res, rej) => { const tx = db.transaction('fotos', 'readwrite'); tx.objectStore('fotos').put(blob, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); this.urls[id] = URL.createObjectURL(blob); return id; },
+  async salvarComId(id, blob) { const db = await this.abrir(); await new Promise((res, rej) => { const tx = db.transaction('fotos', 'readwrite'); tx.objectStore('fotos').put(blob, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); if (this.urls[id]) URL.revokeObjectURL(this.urls[id]); this.urls[id] = URL.createObjectURL(blob); },
+  async ler(id) { const db = await this.abrir(); return new Promise(res => { const req = db.transaction('fotos', 'readonly').objectStore('fotos').get(id); req.onsuccess = () => res(req.result || null); req.onerror = () => res(null); }); },
   async apagar(id) { try { const db = await this.abrir(); await new Promise(res => { const tx = db.transaction('fotos', 'readwrite'); tx.objectStore('fotos').delete(id); tx.oncomplete = res; tx.onerror = res; }); } catch (e) {} if (this.urls[id]) URL.revokeObjectURL(this.urls[id]); delete this.urls[id]; },
   async carregarTodas() { const db = await this.abrir(); await new Promise(res => { const req = db.transaction('fotos', 'readonly').objectStore('fotos').openCursor(); req.onsuccess = () => { const c = req.result; if (c) { this.urls[c.key] = URL.createObjectURL(c.value); c.continue(); } else res(); }; req.onerror = () => res(); }); }
 };
 const fotosLocaisOk = () => !window.claude && 'indexedDB' in window;
 const podeFoto = () => !!assetsNs || fotosLocaisOk();
-const srcFoto = id => (assetsNs ? '/_blob/' + id : FotosLocais.urls[id] || '');
+const baixandoFoto = new Set();
+function baixarFoto(ref) {
+  if (!sb || baixandoFoto.has(ref)) return;
+  baixandoFoto.add(ref);
+  sb.storage.from('fotos').download(ref.slice(3)).then(async ({ data, error }) => {
+    if (error || !data) return;
+    await FotosLocais.salvarComId(ref, data);
+    if (S.page === 'library') render();
+    else if (S.page === 'session' && S.atual) document.querySelectorAll('[data-foto-carregando]').forEach(el => { const card = el.closest('[data-ex]'); if (card && S.atual.ex[card.dataset.ex]) card.outerHTML = cardEx(card.dataset.ex); });
+  }).catch(() => {}).finally(() => baixandoFoto.delete(ref));
+}
+const srcFoto = ref => { const u = FotosLocais.urls[ref]; if (u) return u; if (String(ref).startsWith('sb:')) baixarFoto(ref); return ''; };
 const podeBaixar = () => !!downloads || !window.claude;
 const midia = () => { const m = S.docs.midia || {}; return { fotos: m.fotos || {}, videos: m.videos || {} }; };
 
@@ -473,8 +489,11 @@ function normalizarAtual(s) {
   listaDe(s).forEach(id => { if (s.ex[id] && !s.ex[id].p) s.ex[id].p = prescricao(id, s.treino); });
   return s;
 }
-S.atual = normalizarAtual(S.atual);
-indexarNomes();
+function carregarDoUsuario() {
+  S.docs = carregarDocs(); S.atual = normalizarAtual(LS.get('mt_atual', null));
+  S.pend = new Set(LS.get('mt_pend', [])); S.apagados = new Set(LS.get('mt_apagados', []));
+  indexarNomes();
+}
 
 function rascunhoNuvem() { return sessoesTodas().find(s => !s.arquivado && s.status === 'andamento' && Date.now() - ms(s.inicio) < 12 * 36e5) || null; }
 function rascunho() { return S.atual || rascunhoNuvem(); }
@@ -587,7 +606,7 @@ function setModo(m) {
   const el = $('#status'); if (el) el.textContent = statusTexto();
 }
 function statusTexto() {
-  return { conectando: 'Conectando à sua conta…', nuvem: 'Salvo na sua conta e disponível em qualquer aparelho.', offline: 'Sem conexão agora. Fica salvo aqui e sobe quando a conexão voltar.', local: window.claude ? 'Salvando só neste aparelho. Abra pelo claude.ai com sua conta para sincronizar.' : 'Salvo neste celular. Faça um backup no Perfil de vez em quando.' }[S.modo] || '';
+  return { conectando: 'Sincronizando com a sua conta…', nuvem: 'Sincronizado com a sua conta.', offline: 'Sem conexão agora. Fica salvo neste celular e sobe quando a conexão voltar.', local: 'Salvo neste celular.' }[S.modo] || '';
 }
 async function iniciarNuvem() {
   if (!window.claude || typeof window.claude.use !== 'function') {
@@ -633,41 +652,77 @@ let cadeia = Promise.resolve();
 const comPrazo = (p, t) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), t))]);
 function emSerie(fn) { const p = cadeia.then(fn); cadeia = p.catch(() => {}); return p; }
 /* salva no aparelho na hora e envia para a conta em segundo plano, uma gravação por vez */
+const TIPOS_NUVEM = ['sessao', 'medida', 'perfil', 'midia'];
+function falhaDeRede(err) {
+  const m = String((err && (err.message || err.code)) || err || '');
+  return (err && err.code === 'timeout') || /fetch|network|Failed|Load failed|offline/i.test(m);
+}
+function tratarFalha(err) {
+  if (falhaDeRede(err)) { if (S.modo !== 'offline') setModo('offline'); return; }
+  avisarFalha(err);
+}
+/* salva no aparelho na hora e envia para a conta em segundo plano, uma gravação por vez */
 function gravarNuvem(doc) {
   S.pend.add(doc.id); salvarPend();
-  if (!coll) return;
+  if (!sb || !USUARIO) return;
   proximoDoc[doc.id] = clone(doc);
   if (agendado[doc.id]) return;
   agendado[doc.id] = true;
   emSerie(async () => {
     agendado[doc.id] = false;
     const dados = proximoDoc[doc.id]; delete proximoDoc[doc.id];
-    if (!dados || !coll) return;
-    for (let t = 0; t < 2; t++) {
-      try { await comPrazo(coll.doc(dados.id).set(dados), 20000); if (!proximoDoc[dados.id]) { S.pend.delete(dados.id); salvarPend(); } return; }
-      catch (err) {
-        if (err && err.code === 'unavailable' && t === 0) { await sleep(700 + Math.random() * 900); continue; }
-        if (!err || err.code !== 'timeout') avisarFalha(err);
-        return;
-      }
-    }
+    if (!dados || !sb || !USUARIO) return;
+    const tipo = tipoDoc(dados);
+    if (!TIPOS_NUVEM.includes(tipo)) { S.pend.delete(dados.id); salvarPend(); return; }
+    try {
+      const { error } = await comPrazo(sb.from('registros').upsert({ usuario_id: USUARIO, id: dados.id, tipo, dados }, { onConflict: 'usuario_id,id' }), 20000);
+      if (error) throw error;
+      if (!proximoDoc[dados.id]) { S.pend.delete(dados.id); salvarPend(); }
+      if (S.modo === 'offline') setModo('nuvem');
+    } catch (err) { tratarFalha(err); }
   });
 }
 function gravarDoc(doc) { S.docs[doc.id] = clone(doc); salvarCache(); gravarNuvem(doc); }
 function enviarPendentes() {
-  if (!coll) return;
+  if (!sb || !USUARIO) return;
   for (const id of [...S.pend]) {
     const d = (S.atual && S.atual.id === id) ? S.atual : S.docs[id];
     if (!d) { S.pend.delete(id); salvarPend(); continue; }
     if (!agendado[id]) gravarNuvem(d);
   }
   for (const id of [...S.apagados]) apagarNuvem(id);
+  enviarFotosPendentes();
 }
+async function puxarNuvem(primeira) {
+  if (!sb || !USUARIO) return;
+  try {
+    const linhas = [];
+    for (let de = 0; ; de += 1000) {
+      const { data, error } = await comPrazo(sb.from('registros').select('id,tipo,dados').eq('usuario_id', USUARIO).range(de, de + 999), 20000);
+      if (error) throw error;
+      linhas.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    mesclar(linhas.map(l => Object.assign({}, l.dados, { id: l.id })));
+    setModo('nuvem');
+    if (primeira || S.pend.size || S.apagados.size) enviarPendentes();
+  } catch (err) {
+    if (falhaDeRede(err)) setModo('offline'); else { setModo('offline'); avisarFalha(err); }
+  }
+}
+window.addEventListener('online', () => { enviarPendentes(); puxarNuvem(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && USUARIO && S.page !== 'session') puxarNuvem(); });
 window.addEventListener('online', () => enviarPendentes());
-setInterval(() => { if (coll && (S.pend.size || S.apagados.size)) enviarPendentes(); }, 60000);
+setInterval(() => { if (sb && USUARIO && (S.pend.size || S.apagados.size)) enviarPendentes(); }, 60000);
 function apagarNuvem(id) {
-  if (!coll) return;
-  emSerie(async () => { try { await comPrazo(coll.doc(id).delete(), 20000); if (!S.docs[id]) { S.apagados.delete(id); salvarApagados(); } } catch (err) {} });
+  if (!sb || !USUARIO) return;
+  emSerie(async () => {
+    try {
+      const { error } = await comPrazo(sb.from('registros').delete().eq('usuario_id', USUARIO).eq('id', id), 20000);
+      if (error) throw error;
+      if (!S.docs[id]) { S.apagados.delete(id); salvarApagados(); }
+    } catch (err) { tratarFalha(err); }
+  });
 }
 function apagarDoc(id) {
   delete proximoDoc[id];
@@ -685,6 +740,138 @@ function salvarAtual(nuvem, imediato) {
   tSalvar = setTimeout(() => { if (S.atual) gravarNuvem(S.atual); }, 1500);
 }
 
+/* ================= conta ================= */
+const urlApp = () => location.origin + location.pathname;
+let entrando = false;
+function msgAuth(err) {
+  const m = String((err && err.message) || err || '');
+  if (/Invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
+  if (/Email not confirmed/i.test(m)) return 'Confirme seu e-mail pelo link que enviamos antes de entrar.';
+  if (/already registered|already been registered|already exists/i.test(m)) return 'Já existe uma conta com esse e-mail. Entre ou recupere a senha.';
+  if (/rate limit|only request this after|security purposes|too many/i.test(m)) return 'Muitas tentativas seguidas. Aguarde um minuto e tente de novo.';
+  if (/should be different|same password/i.test(m)) return 'A nova senha precisa ser diferente da atual.';
+  if (/Password|weak|pwned/i.test(m)) return 'Senha fraca: use pelo menos 8 caracteres, misturando letras e números.';
+  if (/fetch|network|Failed|timeout/i.test(m)) return 'Sem conexão com a internet. Tente de novo quando estiver online.';
+  return 'Não deu certo. Tente de novo. (' + m + ')';
+}
+function criarCliente() {
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') return null;
+  try { return window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); }
+  catch (e) { return null; }
+}
+async function iniciarConta() {
+  sb = criarCliente();
+  if (!sb) { S.auth = Object.assign(S.auth, { estado: 'fora', erro: 'Não foi possível carregar o login. Confira a internet e abra o app de novo.' }); render(); return; }
+  const voltouDeLink = /[?&](code|error)=/.test(location.search);
+  sb.auth.onAuthStateChange((evento, sessao) => { setTimeout(() => aoMudarSessao(evento, sessao), 0); });
+  let sessao = null;
+  try { const { data, error } = await sb.auth.getSession(); sessao = data && data.session; if (error && voltouDeLink) S.auth.msg = 'E-mail confirmado. Entre com seu e-mail e senha.'; }
+  catch (e) { /* sem sessão */ }
+  if (voltouDeLink) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }
+  if (sessao) await entrarNoApp(sessao);
+  else if (S.auth.estado !== 'recuperacao') { S.auth.estado = 'fora'; render(); }
+}
+function aoMudarSessao(evento, sessao) {
+  if (evento === 'PASSWORD_RECOVERY') { S.auth = Object.assign(S.auth, { estado: 'recuperacao', tela: 'novasenha', erro: '', msg: '' }); S.sessaoRecuperacao = sessao; render(); return; }
+  if (evento === 'SIGNED_IN' && sessao && S.auth.estado !== 'dentro' && S.auth.estado !== 'recuperacao') { entrarNoApp(sessao); return; }
+  if (evento === 'SIGNED_OUT' && S.auth.estado === 'dentro') sairLocal('Sua sessão terminou. Entre de novo.');
+}
+async function entrarNoApp(sessao) {
+  if (!sessao || !sessao.user) return;
+  if ((S.auth.estado === 'dentro' && USUARIO === sessao.user.id) || entrando) return;
+  entrando = true;
+  try {
+    USUARIO = sessao.user.id;
+    S.auth = Object.assign(S.auth, { estado: 'dentro', user: sessao.user, email: sessao.user.email, erro: '', msg: '' });
+    carregarDoUsuario();
+    S.modo = 'conectando'; S.consentido = !!LS.get('mt_consent', null); S.page = S.atual ? S.page : (S.page === 'session' ? 'home' : S.page);
+    render();
+    if (!S.consentido) await verificarConsentimento();
+    await puxarNuvem(true);
+    carregarPapel();
+    if (S.consentido) oferecerMigracao();
+  } finally { entrando = false; }
+}
+async function verificarConsentimento() {
+  try {
+    const { data, error } = await comPrazo(sb.from('consentimentos').select('documento,versao').eq('usuario_id', USUARIO), 15000);
+    if (error) throw error;
+    const docs = new Set((data || []).filter(d => d.versao === VERSAO_TERMOS).map(d => d.documento));
+    if (['termos', 'privacidade', 'dados_saude'].every(d => docs.has(d))) { LS.set('mt_consent', { versao: VERSAO_TERMOS, em: new Date().toISOString() }); S.consentido = true; render(); }
+  } catch (e) { /* sem conexão: a tela de consentimento pede para tentar de novo */ }
+}
+async function carregarPapel() {
+  try {
+    const { data } = await comPrazo(sb.from('perfis').select('nome,papel').eq('id', USUARIO).maybeSingle(), 15000);
+    if (data) { S.auth.papel = data.papel; S.auth.nomeConta = data.nome; if (S.page === 'profile') render(); }
+  } catch (e) {}
+}
+async function oferecerMigracao() {
+  if (LS.get('mt_migracao', null)) return;
+  const leg = dadosLegados();
+  if (!leg) return;
+  const docs = Object.values(leg).filter(d => d && d.id);
+  const nS = docs.filter(d => tipoDoc(d) === 'sessao').length, nM = docs.filter(d => d.tipo === 'medida').length;
+  const ok = await confirmar(`Encontramos ${nS} ${nS === 1 ? 'treino' : 'treinos'} e ${nM} ${nM === 1 ? 'medição' : 'medições'} salvos neste celular antes do login. Enviar para a sua conta?`, 'Enviar', 'Agora não');
+  if (!ok) { LS.set('mt_migracao', 'recusada'); return; }
+  migrarLegados(docs);
+}
+function migrarLegados(docs) {
+  let n = 0;
+  docs.forEach(d => { if (TIPOS_NUVEM.includes(tipoDoc(d)) && !S.docs[d.id]) { gravarDoc(d); n++; } });
+  try { localStorage.setItem('mt2_docs_legado', localStorage.getItem('mt2_docs')); localStorage.removeItem('mt2_docs'); localStorage.removeItem('mt_atual'); localStorage.removeItem('mt_pend'); localStorage.removeItem('mt_apagados'); } catch (e) {}
+  LS.set('mt_migracao', new Date().toISOString());
+  indexarNomes(); render(); toast(n ? `${n} registros enviados para a sua conta` : 'Esses dados já estavam na sua conta');
+}
+async function sairDaConta() {
+  if (S.pend.size && !await confirmar(`${S.pend.size} ${S.pend.size === 1 ? 'registro ainda não foi enviado' : 'registros ainda não foram enviados'} para a sua conta. Se sair agora, eles se perdem. Sair mesmo assim?`, 'Sair', 'Ficar')) return;
+  try { await sb.auth.signOut(); } catch (e) {}
+  sairLocal('Você saiu da conta.');
+}
+function sairLocal(msg) {
+  ['mt2_docs', 'mt_atual', 'mt_pend', 'mt_apagados'].forEach(k => LS.del(k));
+  USUARIO = null; pararTimer(); liberarTela();
+  Object.assign(S, { docs: {}, atual: null, pend: new Set(), apagados: new Set(), consentido: false, page: 'home', trocarSenha: false });
+  S.auth = { estado: 'fora', tela: 'entrar', msg: msg || '', erro: '', email: '', user: null, papel: null };
+  render();
+}
+function vAuth() {
+  const a = S.auth, aviso = (a.erro ? `<p class="aviso" style="margin-top:12px">${esc(a.erro)}</p>` : '') + (a.msg ? `<p class="alerta">${esc(a.msg)}</p>` : '');
+  const caixa = (titulo, sub, corpo) => `<div class="card" style="max-width:440px;margin:10px auto"><div class="eyebrow">Sua conta</div><h2 style="font-size:25px;margin:6px 0 4px">${titulo}</h2><p class="muted">${sub}</p>${corpo}${aviso}</div>`;
+  if (a.estado === 'carregando') return caixa('Carregando…', 'Conferindo a sua conta.', '');
+  if (a.tela === 'criar') return caixa('Criar conta', 'Seus treinos ficam salvos na sua conta e aparecem em qualquer aparelho.', `<form data-form="auth-criar" class="fields" style="margin-top:12px">
+    <div class="field larga"><label for="a-nome">Nome</label><input id="a-nome" autocomplete="given-name" maxlength="60" required></div>
+    <div class="field larga"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="email" inputmode="email" required value="${esc(a.email || '')}"></div>
+    <div class="field"><label for="a-senha">Senha (mín. 8)</label><input id="a-senha" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="field"><label for="a-senha2">Repita a senha</label><input id="a-senha2" type="password" autocomplete="new-password" minlength="8" required></div>
+    <button class="btn full larga field" type="submit">Criar conta</button></form>
+    <button class="lnk" style="margin-top:8px" data-a="auth-tela" data-t="entrar">Já tenho conta</button>`);
+  if (a.tela === 'esqueci') return caixa('Recuperar senha', 'Enviamos um link para você criar uma senha nova.', `<form data-form="auth-esqueci" style="margin-top:12px">
+    <div class="field"><label for="a-email">E-mail da conta</label><input id="a-email" type="email" autocomplete="email" inputmode="email" required value="${esc(a.email || '')}"></div>
+    <button class="btn full" type="submit" style="margin-top:12px">Enviar link</button></form>
+    <button class="lnk" style="margin-top:8px" data-a="auth-tela" data-t="entrar">Voltar para entrar</button>`);
+  if (a.tela === 'enviado') return caixa('Confira seu e-mail', `Enviamos um link para ${esc(a.email)}. Abra o e-mail neste celular e toque no link; ele traz você de volta ao app.`, `<p class="smalltxt" style="margin-top:10px">Não chegou? Veja a caixa de spam ou aguarde um minuto antes de pedir de novo.</p>
+    <button class="btn secondary full" style="margin-top:12px" data-a="auth-tela" data-t="entrar">Voltar para entrar</button>`);
+  if (a.tela === 'novasenha') return caixa('Nova senha', 'Escolha a nova senha da sua conta.', `<form data-form="auth-novasenha" class="fields" style="margin-top:12px">
+    <div class="field"><label for="a-senha">Nova senha (mín. 8)</label><input id="a-senha" type="password" autocomplete="new-password" minlength="8" required></div>
+    <div class="field"><label for="a-senha2">Repita a senha</label><input id="a-senha2" type="password" autocomplete="new-password" minlength="8" required></div>
+    <button class="btn full larga field" type="submit">Salvar nova senha</button></form>`);
+  return caixa('Entrar', 'Entre para ver seus treinos, cargas e evolução.', `<form data-form="auth-entrar" style="margin-top:12px">
+    <div class="field"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="email" inputmode="email" required value="${esc(a.email || '')}"></div>
+    <div class="field" style="margin-top:9px"><label for="a-senha">Senha</label><input id="a-senha" type="password" autocomplete="current-password" required></div>
+    <button class="btn full" type="submit" style="margin-top:12px">Entrar</button></form>
+    <div class="row between" style="margin-top:8px"><button class="lnk" data-a="auth-tela" data-t="criar">Criar conta</button><button class="lnk" data-a="auth-tela" data-t="esqueci">Esqueci minha senha</button></div>`);
+}
+function vConsent() {
+  return `<div class="card" style="max-width:520px;margin:10px auto"><div class="eyebrow">Antes de começar</div><h2 style="font-size:24px;margin:6px 0 8px">Seus dados, suas regras</h2>
+    <p>O Meu Treino guarda seus treinos, cargas, medidas e as observações de saúde que você informar, numa conta protegida, em servidor no Brasil. Isso serve para acompanhar a sua evolução.</p>
+    <p class="smalltxt">Só você vê os seus dados. No futuro, um treinador só terá acesso se você autorizar. Você pode exportar ou pedir a exclusão dos seus dados quando quiser.</p>
+    <label class="row" style="align-items:flex-start;gap:10px;margin-top:12px;flex-wrap:nowrap"><input type="checkbox" id="c-termos" style="width:22px;height:22px;margin-top:2px;flex-shrink:0"><span>Li e aceito os termos de uso e a política de privacidade (versão preliminar ${VERSAO_TERMOS}).</span></label>
+    <label class="row" style="align-items:flex-start;gap:10px;margin-top:10px;flex-wrap:nowrap"><input type="checkbox" id="c-saude" style="width:22px;height:22px;margin-top:2px;flex-shrink:0"><span>Autorizo o uso dos meus dados de saúde (peso, medidas, dores e restrições) para acompanhar meus treinos.</span></label>
+    <button class="btn full" style="margin-top:16px" data-a="consent-aceitar">Concordo e continuar</button>
+    <button class="lnk" style="margin-top:8px" data-a="auth-sair">Sair da conta</button></div>`;
+}
+
 /* ================= telas ================= */
 const app = $('#app');
 const precisaCadastro = () => S.modo !== 'conectando' && !S.docs.perfil && !S.pularOnb && !validas().length && !S.atual;
@@ -700,6 +887,12 @@ function cabecalho(page) {
   return `<button class="voltar" data-a="voltar">← Voltar</button><span class="titulo">${titulo}</span>${info}`;
 }
 function render() {
+  if (S.auth.estado !== 'dentro' || !S.consentido) {
+    $('#top').innerHTML = `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu desempenho, sua evolução</div></div>`;
+    app.innerHTML = S.auth.estado !== 'dentro' ? vAuth() : vConsent();
+    document.body.classList.add('foco'); $('#nav').hidden = true;
+    return;
+  }
   let page = S.page;
   if (page === 'session' && !S.atual) page = S.page = 'home';
   if (precisaCadastro()) page = 'onboarding';
@@ -746,7 +939,7 @@ function vHome() {
     ${stat('Gordura corporal', mg ? numBR1(mg.gordura) + '%' : '—', mg ? 'Bioimpedância de ' + dataISO(mg.data) : 'Sem bioimpedância')}
     ${stat('Massa muscular', mm ? numBR1(mm.muscular) + ' kg' : '—', mm ? 'Estimativa do exame' : 'Sem bioimpedância')}
     ${stat('Treinos registrados', String(validas().length), 'Na sua conta')}</div>`;
-  if (!window.claude && validas().length && Date.now() - (LS.get('mt_backup_em', 0) || 0) > 14 * 864e5)
+  if (!window.claude && !sb && validas().length && Date.now() - (LS.get('mt_backup_em', 0) || 0) > 14 * 864e5)
     h += `<div class="card" style="margin-top:12px"><div class="row between"><div style="flex:1;min-width:0"><strong>Faça um backup</strong><div class="smalltxt">Seus treinos ficam só neste celular. Um arquivo de backup protege contra perda.</div></div><button class="btn small" data-a="backup">Baixar backup</button></div></div>`;
   h += `<div class="sectionhead"><h2>${r ? 'Treino em andamento' : 'Seu próximo treino'}</h2><span class="pill">Flexível</span></div>`;
   h += r ? cardAndamento(r) : cardTreino(prox, true);
@@ -830,6 +1023,7 @@ const ICON_CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-
 function fotoEx(id) {
   const f = midia().fotos[id];
   if (f && srcFoto(f)) return `<button class="foto tem" data-a="foto-ver" data-ex-id="${id}" aria-label="Ver foto do aparelho"><img src="${esc(srcFoto(f))}" alt="Foto do aparelho: ${esc(nomeEx(id))}" loading="lazy"></button>`;
+  if (f) return `<div class="foto" data-foto-carregando aria-label="Carregando a foto">${ICON_CAM}<span>…</span></div>`;
   if (!podeFoto()) return `<div class="foto" aria-hidden="true">${ICON_CAM}<span>Sem foto</span></div>`;
   return `<label class="foto" aria-label="Tirar foto do aparelho">${ICON_CAM}<span>Foto</span><input type="file" accept="image/*" data-foto-ex="${id}" hidden></label>`;
 }
@@ -1186,17 +1380,48 @@ function atualizarFotoNaTela(id) {
   if (art && S.page === 'session' && S.atual && S.atual.ex[id]) art.outerHTML = cardEx(id);
   else if (S.page === 'library') render();
 }
+async function subirFoto(blob, type, exId) {
+  if (!sb || !USUARIO) return null;
+  const caminho = `${USUARIO}/${exId}-${Date.now()}.jpg`;
+  try {
+    const { error } = await comPrazo(sb.storage.from('fotos').upload(caminho, blob, { contentType: type || 'image/jpeg', upsert: true }), 30000);
+    if (error) return null;
+    const ref = 'sb:' + caminho; await FotosLocais.salvarComId(ref, blob); return ref;
+  } catch (e) { return null; }
+}
+function apagarFoto(ref) {
+  if (!ref) return;
+  if (String(ref).startsWith('sb:') && sb) sb.storage.from('fotos').remove([ref.slice(3)]).catch(() => {});
+  FotosLocais.apagar(ref);
+}
+/* fotos tiradas sem internet ficam no aparelho e sobem na próxima sincronização */
+let subindoFotos = false;
+async function enviarFotosPendentes() {
+  if (subindoFotos || !sb || !USUARIO || !fotosLocaisOk()) return;
+  const locais = Object.entries(midia().fotos).filter(([, ref]) => String(ref).startsWith('f'));
+  if (!locais.length) return;
+  subindoFotos = true;
+  try {
+    for (const [exId, ref] of locais) {
+      const blob = await FotosLocais.ler(ref); if (!blob) continue;
+      const novo = await subirFoto(blob, blob.type, exId); if (!novo) break;
+      const m = docMidia(); if (m.fotos[exId] !== ref) continue;
+      m.fotos[exId] = novo; gravarDoc(m); FotosLocais.apagar(ref);
+    }
+  } finally { subindoFotos = false; }
+}
 async function enviarFoto(id, arquivo) {
   if (!podeFoto() || !arquivo) return;
   toast('Salvando a foto…');
   try {
     const { blob, type } = await reduzirImagem(arquivo, 1280);
-    const novo = assetsNs ? (await assetsNs.upload(blob, { type })).id : await FotosLocais.salvar(blob);
+    let novo = assetsNs ? (await assetsNs.upload(blob, { type })).id : await subirFoto(blob, type, id);
+    if (!novo) novo = await FotosLocais.salvar(blob);
     const m = docMidia(), antiga = m.fotos[id];
-    m.fotos[id] = novo; await gravarDoc(m);
-    if (antiga) { if (assetsNs) assetsNs.delete(antiga).catch(() => {}); else FotosLocais.apagar(antiga); }
-    atualizarFotoNaTela(id); toast('Foto salva');
-  } catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Espaço para fotos cheio' : 'Não foi possível salvar a foto'); }
+    m.fotos[id] = novo; gravarDoc(m);
+    if (antiga) { if (assetsNs) assetsNs.delete(antiga).catch(() => {}); else apagarFoto(antiga); }
+    atualizarFotoNaTela(id); toast(String(novo).startsWith('f') ? 'Foto salva neste celular; sobe para a conta quando houver internet' : 'Foto salva');
+  } catch (e) { toast('Não foi possível salvar a foto'); }
 }
 async function verFoto(id) {
   const f = midia().fotos[id]; if (!f) return;
@@ -1205,7 +1430,7 @@ async function verFoto(id) {
     podeFoto() ? [['Remover', 'rm', 'secondary'], ['Fechar', '1']] : [['Fechar', '1']]);
   if (r !== 'rm' || !await confirmar('Remover a foto deste aparelho?', 'Remover', 'Cancelar')) return;
   const m = docMidia(), antiga = m.fotos[id]; delete m.fotos[id]; await gravarDoc(m);
-  if (antiga) { if (assetsNs) assetsNs.delete(antiga).catch(() => {}); else FotosLocais.apagar(antiga); }
+  if (antiga) { if (assetsNs) assetsNs.delete(antiga).catch(() => {}); else apagarFoto(antiga); }
   atualizarFotoNaTela(id); toast('Foto removida');
 }
 
@@ -1237,7 +1462,13 @@ function lerPerfil(pre, base) {
 function lerBio(pre) { const r = {}; CAMPOS_BIO.forEach(([k]) => { const el = document.getElementById(pre + k), x = el ? num(el.value) : null; if (x != null) r[k] = x; }); return r; }
 function vProfile() {
   const p = perfil();
+  const papel = { admin: 'Administrador', treinador: 'Treinador', aluno: 'Aluno' }[S.auth.papel] || '';
   let h = `<div class="eyebrow">Configurações</div><h2>Meu perfil</h2>
+    <div class="card"><div class="row between"><h3 style="margin:0">Conta</h3>${papel ? `<span class="pill ${S.auth.papel === 'admin' ? 'ok' : ''}">${papel}</span>` : ''}</div>
+      <div class="linha-info"><span class="muted">E-mail</span><strong>${esc(S.auth.email || '')}</strong></div>
+      <p class="smalltxt" id="status" style="margin-top:6px">${esc(statusTexto())}</p>
+      ${S.trocarSenha ? `<form data-form="trocar-senha" class="fields" style="margin-top:10px"><div class="field"><label for="t-senha">Nova senha (mín. 8)</label><input id="t-senha" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="t-senha2">Repita a senha</label><input id="t-senha2" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn small larga field" type="submit">Salvar nova senha</button></form>` : ''}
+      <div class="row" style="margin-top:10px"><button class="btn secondary small" data-a="trocar-senha">${S.trocarSenha ? 'Cancelar' : 'Trocar senha'}</button><button class="btn secondary small" data-a="auth-sair">Sair da conta</button>${dadosLegados() && LS.get('mt_migracao', null) === 'recusada' ? `<button class="btn secondary small" data-a="migrar">Enviar dados antigos deste celular</button>` : ''}</div></div>
     <div class="card"><h3>${esc(p.nome || 'Seu perfil')}</h3><p class="smalltxt">Objetivo: ${esc(p.objetivo || 'não definido')}. Programa: ${esc(prog().nome)}.</p>
       ${p.altura ? `<div class="linha-info"><span class="muted">Altura</span><strong>${numBR(p.altura)} m</strong></div>` : ''}
       ${p.idade ? `<div class="linha-info"><span class="muted">Idade</span><strong>${p.idade} anos</strong></div>` : ''}
@@ -1250,7 +1481,7 @@ function vProfile() {
       <div style="margin-top:9px">${camposBio('pr-', p.ref || {})}</div>
       <button class="btn full" style="margin-top:14px" data-a="perfil-salvar">Salvar perfil</button></div>`;
   }
-  h += `<div class="card"><h3>Seus dados</h3><p class="smalltxt" id="status">${esc(statusTexto())}</p>
+  h += `<div class="card"><h3>Seus dados</h3><p class="smalltxt">Exporte uma cópia quando quiser. A importação aceita o backup deste app e o arquivo do app anterior.</p>
     <div class="row" style="margin-top:10px">${podeBaixar() ? `<button class="btn secondary small" data-a="backup">Exportar meus dados (JSON)</button><button class="btn secondary small" data-a="csv">Exportar CSV</button>` : ''}<button class="btn secondary small" data-a="importar">Importar backup</button></div>
     <p class="smalltxt" style="margin-top:8px">A importação aceita o backup deste app e o arquivo exportado pelo app anterior.</p>
     <input type="file" id="arq-import" accept="application/json,.json" hidden>
@@ -1262,7 +1493,7 @@ function vOnboarding() {
   return `<div class="card" style="max-width:520px;margin:10px auto">
     <div class="eyebrow">Primeiro acesso · perfil inicial</div><h2 style="font-size:25px">Vamos começar?</h2>
     <p class="muted">Crie seu perfil para preparar seu plano de treino. Seus dados ficam salvos na sua conta.</p>
-    ${formPerfil({ programa: 'corpo' }, 'o-')}
+    ${formPerfil({ programa: 'corpo', nome: (S.auth.user && S.auth.user.user_metadata && S.auth.user.user_metadata.nome) || '' }, 'o-')}
     <div class="card" style="margin-top:14px;background:var(--panel2)"><strong>Você tem um exame de bioimpedância?</strong>
       <p class="smalltxt">Se tiver, registre os valores. Se não tiver, pode seguir sem preencher esta parte.</p>${botaoFoto('o-')}
       <div class="fields" style="margin-top:8px"><div class="field larga"><label for="o-data">Data do exame</label><input type="date" id="o-data"></div></div>
@@ -1456,6 +1687,20 @@ async function tratarClique(ev) {
       ir('session'); manterTelaLigada(); break;
     }
     case 'voltar': voltar(); break;
+    case 'auth-tela': S.auth.tela = b.dataset.t; S.auth.erro = ''; S.auth.msg = ''; render(); break;
+    case 'auth-sair': sairDaConta(); break;
+    case 'trocar-senha': S.trocarSenha = !S.trocarSenha; render(); break;
+    case 'migrar': { const leg = dadosLegados(); if (leg) migrarLegados(Object.values(leg).filter(d => d && d.id)); break; }
+    case 'consent-aceitar': {
+      if (!$('#c-termos').checked || !$('#c-saude').checked) { toast('Marque as duas opções para continuar'); return; }
+      b.disabled = true; b.textContent = 'Salvando…';
+      try {
+        const { error } = await comPrazo(sb.from('consentimentos').insert(['termos', 'privacidade', 'dados_saude'].map(documento => ({ usuario_id: USUARIO, documento, versao: VERSAO_TERMOS }))), 15000);
+        if (error) throw error;
+        LS.set('mt_consent', { versao: VERSAO_TERMOS, em: new Date().toISOString() }); S.consentido = true; render(); oferecerMigracao();
+      } catch (err) { b.disabled = false; b.textContent = 'Concordo e continuar'; toast(falhaDeRede(err) ? 'Sem conexão. Tente de novo quando estiver online.' : 'Não foi possível salvar. Tente de novo.'); }
+      break;
+    }
     case 'foto-ver': verFoto(b.dataset.exId); break;
     case 'video-salvar': {
       const url = ($('#v-' + b.dataset.id) || {}).value || '';
@@ -1587,6 +1832,54 @@ async function tratarClique(ev) {
   }
 }
 
+app.addEventListener('submit', ev => {
+  const form = ev.target.closest('form[data-form]'); if (!form) return;
+  ev.preventDefault();
+  enviarFormulario(form).catch(err => { S.auth.erro = msgAuth(err); render(); });
+});
+async function enviarFormulario(form) {
+  const tipo = form.dataset.form, v = id => ((form.querySelector('#' + id) || {}).value || '');
+  const botao = form.querySelector('[type="submit"]');
+  if (botao) { botao.disabled = true; botao.textContent = 'Aguarde…'; }
+  const email = v('a-email').trim().toLowerCase();
+  if (email) S.auth.email = email;
+  S.auth.erro = ''; S.auth.msg = '';
+  const erro = m => { if (tipo === 'trocar-senha') { toast(m); render(); } else { S.auth.erro = m; render(); } };
+  if (!sb) return erro('Sem conexão com o servidor de login.');
+  if (tipo === 'auth-entrar') {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: v('a-senha') });
+    if (error) return erro(msgAuth(error));
+    return entrarNoApp(data.session);
+  }
+  if (tipo === 'auth-criar') {
+    const nome = v('a-nome').trim(), s1 = v('a-senha'), s2 = v('a-senha2');
+    if (!nome) return erro('Informe seu nome.');
+    if (s1.length < 8) return erro('A senha precisa ter pelo menos 8 caracteres.');
+    if (s1 !== s2) return erro('As duas senhas não são iguais.');
+    const { data, error } = await sb.auth.signUp({ email, password: s1, options: { data: { nome }, emailRedirectTo: urlApp() } });
+    if (error) return erro(msgAuth(error));
+    if (data && data.session) return entrarNoApp(data.session);
+    S.auth.tela = 'enviado'; return render();
+  }
+  if (tipo === 'auth-esqueci') {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: urlApp() });
+    if (error) return erro(msgAuth(error));
+    S.auth.tela = 'enviado'; return render();
+  }
+  if (tipo === 'auth-novasenha' || tipo === 'trocar-senha') {
+    const pre = tipo === 'auth-novasenha' ? 'a-' : 't-', s1 = v(pre + 'senha'), s2 = v(pre + 'senha2');
+    if (s1.length < 8) return erro('A senha precisa ter pelo menos 8 caracteres.');
+    if (s1 !== s2) return erro('As duas senhas não são iguais.');
+    const { error } = await sb.auth.updateUser({ password: s1 });
+    if (error) return erro(msgAuth(error));
+    toast('Senha alterada');
+    if (tipo === 'trocar-senha') { S.trocarSenha = false; return render(); }
+    S.auth.estado = 'fora';
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) return entrarNoApp(data.session);
+    S.auth.tela = 'entrar'; S.auth.msg = 'Senha alterada. Entre com a nova senha.'; return render();
+  }
+}
 app.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'busca') {
@@ -1655,7 +1948,9 @@ setInterval(() => { const i = $('#hdr-info'); if (i && S.page === 'session') i.t
   if (location.hash.slice(1) !== hash) { navegando = true; location.replace('#' + hash); }
 })();
 render();
-iniciarNuvem();
+if (fotosLocaisOk()) FotosLocais.carregarTodas().catch(() => {});
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+iniciarConta();
 if (!window.claude && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
