@@ -285,10 +285,16 @@ body.foco #toast{ bottom:calc(130px + env(safe-area-inset-bottom,0px)); }
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.0';
-const SUPA_URL = 'https://gspcitfcvypdchovnhve.supabase.co';
-const SUPA_CHAVE = 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4';
-const VERSAO_TERMOS = '0.1';
+const VERSAO_APP = '4.1';
+/* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
+const AMBIENTES = {
+  producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
+  teste: { url: '', chave: '' } /* projeto de testes (Ohio): preencher quando o endereço de teste for criado */
+};
+const AMBIENTE = /\/meu-treino-teste(\/|$)/.test(location.pathname) ? 'teste' : 'producao';
+const SUPA_URL = AMBIENTES[AMBIENTE].url;
+const SUPA_CHAVE = AMBIENTES[AMBIENTE].chave;
+const VERSAO_TERMOS = '0.2';
 const PROGRAMAS = {
   principal: {
     versao: '2.0', nome: 'Superior e inferior', dias: 4, duracao: 'cerca de 55 min', resumo: 'Segunda, terça, quarta e fim de semana. Cada músculo 2× por semana.', ordem: ['A', 'B', 'C', 'D'],
@@ -642,10 +648,16 @@ function mesclar(daNuvem) {
 }
 const fila = {};
 let ultimoAvisoFalha = 0;
+/* motivo curto devolvido pelo servidor, para diagnosticar sem adivinhar */
+function motivo(e) {
+  if (!e) return 'erro desconhecido';
+  const partes = [e.code, e.message || e.error_description || e.details || (typeof e === 'string' ? e : '')].filter(Boolean).map(String);
+  return (partes.join(': ') || 'erro desconhecido').slice(0, 120);
+}
 function avisarFalha(e) {
   if (Date.now() - ultimoAvisoFalha < 15000) return;
   ultimoAvisoFalha = Date.now();
-  toast(e && e.code === 'quota_exceeded' ? 'Espaço da conta cheio. Exporte um backup e apague registros antigos.' : 'Não salvou na conta agora. Ficou guardado neste aparelho.');
+  toast(e && e.code === 'quota_exceeded' ? 'Espaço da conta cheio. Exporte um backup e apague registros antigos.' : `Não salvou na conta agora (${motivo(e)}). Ficou guardado neste aparelho.`, 7000);
 }
 const proximoDoc = {}, agendado = {};
 let cadeia = Promise.resolve();
@@ -755,13 +767,14 @@ function msgAuth(err) {
   return 'Não deu certo. Tente de novo. (' + m + ')';
 }
 function criarCliente() {
+  if (!SUPA_URL || !SUPA_CHAVE) return null;
   if (!window.supabase || typeof window.supabase.createClient !== 'function') return null;
   try { return window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); }
   catch (e) { return null; }
 }
 async function iniciarConta() {
   sb = criarCliente();
-  if (!sb) { S.auth = Object.assign(S.auth, { estado: 'fora', erro: 'Não foi possível carregar o login. Confira a internet e abra o app de novo.' }); render(); return; }
+  if (!sb) { S.auth = Object.assign(S.auth, { estado: 'fora', erro: !SUPA_URL ? 'Este endereço de teste ainda não foi ligado a um banco de dados.' : 'Não foi possível carregar o login. Confira a internet e abra o app de novo.' }); render(); return; }
   const voltouDeLink = /[?&](code|error)=/.test(location.search);
   sb.auth.onAuthStateChange((evento, sessao) => { setTimeout(() => aoMudarSessao(evento, sessao), 0); });
   let sessao = null;
@@ -865,7 +878,7 @@ function vAuth() {
 function vConsent() {
   return `<div class="card" style="max-width:520px;margin:10px auto"><div class="eyebrow">Antes de começar</div><h2 style="font-size:24px;margin:6px 0 8px">Seus dados, suas regras</h2>
     <p>O Meu Treino guarda seus treinos, cargas, medidas e as observações de saúde que você informar, numa conta protegida, em servidor no Brasil. Isso serve para acompanhar a sua evolução.</p>
-    <p class="smalltxt">Só você vê os seus dados. No futuro, um treinador só terá acesso se você autorizar. Você pode exportar ou pedir a exclusão dos seus dados quando quiser.</p>
+    <p class="smalltxt">No app, só você vê os seus dados. A administração do Meu Treino só acessa seus dados quando necessário para suporte e segurança. No futuro, um treinador só terá acesso se você autorizar. Você pode exportar ou pedir a exclusão dos seus dados quando quiser.</p>
     <label class="row" style="align-items:flex-start;gap:10px;margin-top:12px;flex-wrap:nowrap"><input type="checkbox" id="c-termos" style="width:22px;height:22px;margin-top:2px;flex-shrink:0"><span>Li e aceito os termos de uso e a política de privacidade (versão preliminar ${VERSAO_TERMOS}).</span></label>
     <label class="row" style="align-items:flex-start;gap:10px;margin-top:10px;flex-wrap:nowrap"><input type="checkbox" id="c-saude" style="width:22px;height:22px;margin-top:2px;flex-shrink:0"><span>Autorizo o uso dos meus dados de saúde (peso, medidas, dores e restrições) para acompanhar meus treinos.</span></label>
     <button class="btn full" style="margin-top:16px" data-a="consent-aceitar">Concordo e continuar</button>
@@ -879,8 +892,9 @@ const PAGINAS = { home: ['inicio', ''], workouts: ['treinos', 'Meus treinos'], h
 const HASH_PAGINA = Object.fromEntries(Object.entries(PAGINAS).map(([k, v]) => [v[0], k]));
 const pilha = [];
 let navegando = false;
+const seloTeste = () => (AMBIENTE === 'teste' ? `<span class="pill" style="background:var(--red);color:#fff">Ambiente de teste</span>` : '');
 function cabecalho(page) {
-  if (page === 'home') return `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu desempenho, sua evolução</div></div><button class="btn ghost small" data-go="history">Histórico</button>`;
+  if (page === 'home') return `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu desempenho, sua evolução</div></div>${seloTeste() || `<button class="btn ghost small" data-go="history">Histórico</button>`}`;
   if (page === 'onboarding') return `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Primeiro acesso</div></div>`;
   const titulo = page === 'session' && S.atual ? `Treino ${esc(S.atual.treino)}` : PAGINAS[page][1];
   const info = page === 'session' && S.atual ? `<span class="info" id="hdr-info">${minutosDecorridos()} min</span>` : page === 'recomecar' ? `<span class="info">Passo ${S.rec.passo} de 3</span>` : '<span></span>';
@@ -888,7 +902,7 @@ function cabecalho(page) {
 }
 function render() {
   if (S.auth.estado !== 'dentro' || !S.consentido) {
-    $('#top').innerHTML = `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu desempenho, sua evolução</div></div>`;
+    $('#top').innerHTML = `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu desempenho, sua evolução</div></div>${seloTeste()}`;
     app.innerHTML = S.auth.estado !== 'dentro' ? vAuth() : vConsent();
     document.body.classList.add('foco'); $('#nav').hidden = true;
     return;
@@ -1467,6 +1481,7 @@ function vProfile() {
     <div class="card"><div class="row between"><h3 style="margin:0">Conta</h3>${papel ? `<span class="pill ${S.auth.papel === 'admin' ? 'ok' : ''}">${papel}</span>` : ''}</div>
       <div class="linha-info"><span class="muted">E-mail</span><strong>${esc(S.auth.email || '')}</strong></div>
       <p class="smalltxt" id="status" style="margin-top:6px">${esc(statusTexto())}</p>
+      <p class="smalltxt">Versão do app ${VERSAO_APP}${AMBIENTE === 'teste' ? ' · ambiente de teste' : ''}.</p>
       ${S.trocarSenha ? `<form data-form="trocar-senha" class="fields" style="margin-top:10px"><div class="field"><label for="t-senha">Nova senha (mín. 8)</label><input id="t-senha" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="t-senha2">Repita a senha</label><input id="t-senha2" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn small larga field" type="submit">Salvar nova senha</button></form>` : ''}
       <div class="row" style="margin-top:10px"><button class="btn secondary small" data-a="trocar-senha">${S.trocarSenha ? 'Cancelar' : 'Trocar senha'}</button><button class="btn secondary small" data-a="auth-sair">Sair da conta</button>${dadosLegados() && LS.get('mt_migracao', null) === 'recusada' ? `<button class="btn secondary small" data-a="migrar">Enviar dados antigos deste celular</button>` : ''}</div></div>
     <div class="card"><h3>${esc(p.nome || 'Seu perfil')}</h3><p class="smalltxt">Objetivo: ${esc(p.objetivo || 'não definido')}. Programa: ${esc(prog().nome)}.</p>
@@ -1601,7 +1616,7 @@ async function manterTelaLigada() { try { if ('wakeLock' in navigator && !wl) { 
 function liberarTela() { try { wl && wl.release(); } catch (e) {} wl = null; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.page === 'session') manterTelaLigada(); });
 let tToast = null;
-function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(tToast); tToast = setTimeout(() => el.classList.remove('on'), 2800); }
+function toast(msg, dur) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(tToast); tToast = setTimeout(() => el.classList.remove('on'), dur || 2800); }
 function modal(html, botoes) {
   return new Promise(res => {
     const m = document.createElement('div'); m.className = 'modal';
@@ -1698,7 +1713,7 @@ async function tratarClique(ev) {
         const { error } = await comPrazo(sb.from('consentimentos').insert(['termos', 'privacidade', 'dados_saude'].map(documento => ({ usuario_id: USUARIO, documento, versao: VERSAO_TERMOS }))), 15000);
         if (error) throw error;
         LS.set('mt_consent', { versao: VERSAO_TERMOS, em: new Date().toISOString() }); S.consentido = true; render(); oferecerMigracao();
-      } catch (err) { b.disabled = false; b.textContent = 'Concordo e continuar'; toast(falhaDeRede(err) ? 'Sem conexão. Tente de novo quando estiver online.' : 'Não foi possível salvar. Tente de novo.'); }
+      } catch (err) { b.disabled = false; b.textContent = 'Concordo e continuar'; toast(falhaDeRede(err) ? 'Sem conexão. Tente de novo quando estiver online.' : `Não foi possível salvar (${motivo(err)}). Tente de novo.`, 7000); }
       break;
     }
     case 'foto-ver': verFoto(b.dataset.exId); break;
