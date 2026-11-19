@@ -1,5 +1,5 @@
 /* Meu Treino: funciona sem internet e busca atualizações quando há conexão */
-const CACHE = 'meu-treino-4.0';
+const CACHE = 'meu-treino-4.1';
 const ARQUIVOS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js'];
 self.addEventListener('install', e => {
