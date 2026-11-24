@@ -323,6 +323,35 @@ h2.sub{ font-size:21px; margin:22px 0 10px; }
 .player-video{ position:relative; width:100%; aspect-ratio:16/9; background:#000; }
 .player-video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
 .player-rodape{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; font-size:12px; color:var(--muted); }
+/* ===== 4.6: sem seleção de texto (evita o "Tocar para pesquisar"), opções no lugar de caixas de texto ===== */
+body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.chip{ min-height:42px; padding:0 14px; border-radius:21px; border:1px solid var(--line); background:var(--panel2); color:var(--text); font-weight:600; font-size:14px; display:inline-flex; align-items:center; gap:6px; }
+.chip[aria-pressed="true"]{ background:var(--orange); border-color:var(--orange); color:#1A0E05; }
+.chips.peq .chip{ min-height:36px; font-size:13px; padding:0 12px; }
+.cad-passos{ display:flex; gap:6px; margin:6px 0 4px; }
+.cad-passos span{ flex:1; height:5px; border-radius:3px; background:var(--line); }
+.cad-passos span.on{ background:var(--orange); }
+.cad-sec{ margin-top:18px; }
+.cad-sec .rot{ display:block; font-size:13px; font-weight:700; color:var(--muted); margin-bottom:8px; }
+.num-step{ display:flex; align-items:center; border:1px solid var(--input-line); border-radius:12px; background:var(--input); height:48px; width:100%; max-width:220px; }
+.num-step button{ width:46px; height:46px; font-size:22px; font-weight:700; color:var(--text); flex-shrink:0; }
+.num-step input{ flex:1; min-width:0; width:100%; text-align:center; border:0 !important; background:transparent !important; font-weight:700; font-size:17px; padding:0; }
+.cad-dupla{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.prog-op{ display:block; width:100%; text-align:left; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--panel2); color:var(--text); margin-bottom:8px; }
+.prog-op[aria-pressed="true"]{ border-color:var(--orange); background:#2A1708; }
+.prog-op strong{ display:block; font-size:15px; }
+.prog-op small{ color:var(--muted); font-size:13px; }
+.parq{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+.parq p{ margin:0; font-size:14px; line-height:1.4; }
+.parq .simnao{ display:flex; gap:6px; flex-shrink:0; }
+.parq .simnao button{ min-width:52px; min-height:40px; border-radius:10px; border:1px solid var(--line); background:var(--panel2); color:var(--text); font-weight:700; }
+.parq .simnao button[aria-pressed="true"]{ background:var(--orange); border-color:var(--orange); color:#1A0E05; }
+.avatar-bt{ padding:0; border:0; background:transparent; border-radius:50%; flex-shrink:0; }
+.anexo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.btn-google{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:52px; border-radius:12px; background:#FFFFFF; color:#1F1F1F; font-weight:700; font-size:15px; border:1px solid #DADCE0; }
+.btn-google svg{ width:20px; height:20px; }
 /* ===== tela do exercício (referência: vídeo em destaque em cima) ===== */
 .exv-cab{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
 .exv-nome{ font-family:var(--fd); font-weight:800; font-size:30px; line-height:1.05; }
@@ -332,6 +361,7 @@ h2.sub{ font-size:21px; margin:22px 0 10px; }
 .exv-midia iframe,.exv-midia img{ position:absolute; inset:0; width:100%; height:100%; border:0; object-fit:cover; }
 .exv-midia.vazio{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); background:#121212; font-size:13px; }
 .exv-midia.vazio svg{ width:44px; height:44px; stroke:var(--orange); fill:none; stroke-width:2; stroke-linecap:round; }
+.exv-reserva{ margin:-6px 0 10px; text-align:right; font-size:12px; }
 .exv-yt{ position:absolute; right:10px; bottom:10px; background:rgba(11,11,11,.8); border:1px solid #3A3A3A; color:#FFFFFF; border-radius:10px; padding:8px 10px; font-size:12px; font-weight:700; }
 .abas{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; gap:4px; margin-bottom:10px; }
 .abas button{ min-height:40px; border-radius:10px; font-weight:700; font-size:13px; color:var(--muted); }
@@ -341,8 +371,8 @@ h2.sub{ font-size:21px; margin:22px 0 10px; }
 .passos li{ counter-increment:p; display:flex; gap:10px; margin:0 0 10px; font-size:14px; line-height:1.45; }
 .passos li:last-child{ margin-bottom:0; }
 .passos li::before{ content:counter(p); flex-shrink:0; width:24px; height:24px; border-radius:12px; background:var(--orange); color:#1A0E05; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; }
-.mapa-box{ width:88px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
-.mapa{ width:80px; height:168px; }
+.mapa-box{ width:92px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.mapa{ width:88px; height:161px; }
 .mapa-box small{ font-size:10.5px; color:var(--muted); display:flex; align-items:center; gap:4px; }
 .mapa-box small i{ width:9px; height:9px; border-radius:5px; display:inline-block; }
 .nota-orient{ font-size:11px; color:var(--muted); margin:8px 0 0; }
@@ -418,7 +448,7 @@ h2.sub{ font-size:21px; margin:22px 0 10px; }
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.5';
+const VERSAO_APP = '4.6';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -550,7 +580,7 @@ function fmtSets(sets) {
 function carregarDocs() { return LS.get('mt2_docs', {}) || {}; }
 function dadosLegados() { try { const d = JSON.parse(localStorage.getItem('mt2_docs') || 'null'); return d && typeof d === 'object' && Object.keys(d).length ? d : null; } catch (e) { return null; } }
 const S = {
-  page: 'home', docs: {}, atual: null, pend: new Set(), apagados: new Set(),
+  page: 'home', docs: {}, atual: null, pend: new Set(), apagados: new Set(), anexos: {}, cad: null, ed: null, googleAtivo: false,
   auth: { estado: 'carregando', tela: 'boasvindas', msg: '', erro: '', email: '', user: null, papel: null }, consentido: false, trocarSenha: false,
   modo: 'conectando', busca: '', exForca: null, periodo: 14, pergunta: '', relVisivel: false,
   cal: null, diaSel: null, aberto: null, pularOnb: false, editarPerfil: false,
@@ -618,7 +648,9 @@ function medidasTodas() {
   if (p.ref && p.refData && Object.keys(p.ref).length) {
     const mesmo = lista.find(m => m.data === p.refData);
     if (mesmo) Object.keys(p.ref).forEach(k => { if (mesmo[k] == null) mesmo[k] = p.ref[k]; });
-    else lista.push(Object.assign({ id: 'ref', tipo: 'medida', data: p.refData, obs: 'Bioimpedância do perfil', doPerfil: true }, p.ref));
+    else lista.push(Object.assign({ id: 'ref', tipo: 'medida', data: p.refData, obs: 'Bioimpedância do perfil', doPerfil: true, exame: p.refExame || null }, p.ref));
+  } else if (p.refExame && p.refData && !lista.some(m => m.data === p.refData)) {
+    lista.push({ id: 'ref', tipo: 'medida', data: p.refData, obs: 'Exame do perfil', doPerfil: true, exame: p.refExame });
   }
   return lista.sort((a, b) => String(a.data).localeCompare(String(b.data)));
 }
@@ -913,8 +945,12 @@ function criarCliente() {
   try { return window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); }
   catch (e) { return null; }
 }
+async function verificarGoogle() {
+  try { const r = await fetch(SUPA_URL + '/auth/v1/settings', { headers: { apikey: SUPA_CHAVE } }); const j = await r.json(); S.googleAtivo = !!(j && j.external && j.external.google); if (S.auth.estado === 'fora') render(); } catch (e) { /* sem conexão: o botão do Google só aparece quando o servidor confirma */ }
+}
 async function iniciarConta() {
   sb = criarCliente();
+  if (sb && typeof fetch === 'function') verificarGoogle();
   if (!sb) { S.auth = Object.assign(S.auth, { estado: 'fora', erro: !SUPA_URL ? 'Este endereço de teste ainda não foi ligado a um banco de dados.' : 'Não foi possível carregar o login. Confira a internet e abra o app de novo.' }); render(); return; }
   const voltouDeLink = /[?&](code|error)=/.test(location.search);
   sb.auth.onAuthStateChange((evento, sessao) => { setTimeout(() => aoMudarSessao(evento, sessao), 0); });
@@ -995,7 +1031,7 @@ function vAuth() {
   if (a.estado === 'carregando') return caixa('Carregando…', 'Conferindo a sua conta.', '');
   if (a.tela === 'boasvindas') return `<div class="bv"${FOTOS.atleta ? ` style="background-image:url('${FOTOS.atleta}')"` : ''}><div class="bv-topo"><span class="bv-logo" aria-hidden="true">${ICO.logo}<b>MT</b></span><div class="bv-marca">Meu Treino</div><div class="bv-tag">SEU TREINO, SUA EVOLUÇÃO</div>${seloTeste()}</div>
     <div class="bv-base"><div class="bv-frase"><i aria-hidden="true"></i><p>Organize seus treinos, registre seus resultados e evolua com inteligência.</p></div>${aviso}
-      <button class="btn full cta" data-a="auth-tela" data-t="entrar">Entrar ${ICO.seta}</button><button class="btn full ghost cta" data-a="auth-tela" data-t="criar">Criar conta</button>
+      <button class="btn full cta" data-a="auth-tela" data-t="entrar">Entrar ${ICO.seta}</button>${S.googleAtivo ? `<button class="btn-google" data-a="auth-google">${ICO.google}Continuar com o Google</button>` : ''}<button class="btn full ghost cta" data-a="auth-tela" data-t="criar">Criar conta</button>
       <button class="lnk" data-a="auth-tela" data-t="esqueci">Esqueci minha senha</button></div></div>`;
   if (a.tela === 'criar') return caixa('Criar conta', 'Seus treinos ficam salvos na sua conta e aparecem em qualquer aparelho.', `<form data-form="auth-criar" class="fields" style="margin-top:12px">
     <div class="field larga"><label for="a-nome">Nome</label><input id="a-nome" autocomplete="given-name" maxlength="60" required></div>
@@ -1017,7 +1053,7 @@ function vAuth() {
   return caixa('Entrar', 'Entre para ver seus treinos, cargas e evolução.', `<form data-form="auth-entrar" style="margin-top:12px">
     <div class="field"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="email" inputmode="email" required value="${esc(a.email || '')}"></div>
     <div class="field" style="margin-top:9px"><label for="a-senha">Senha</label><input id="a-senha" type="password" autocomplete="current-password" required></div>
-    <button class="btn full cta" type="submit" style="margin-top:12px">Entrar</button></form>
+    <button class="btn full cta" type="submit" style="margin-top:12px">Entrar</button></form>${S.googleAtivo ? `<button class="btn-google" style="margin-top:10px" data-a="auth-google">${ICO.google}Continuar com o Google</button>` : ''}
     <div class="row between" style="margin-top:8px"><button class="lnk" data-a="auth-tela" data-t="criar">Criar conta</button><button class="lnk" data-a="auth-tela" data-t="esqueci">Esqueci minha senha</button></div>`);
 }
 function vConsent() {
@@ -1041,7 +1077,7 @@ const seloTeste = () => (AMBIENTE === 'teste' ? `<span class="pill" style="backg
 function cabecalho(page) {
   if (page === 'home') {
     const nome = ((perfil().nome || (S.auth.user && S.auth.user.user_metadata && S.auth.user.user_metadata.nome) || '').trim().split(/\s+/)[0]) || '';
-    const esq = nome ? `<div class="saud"><div class="avatar" aria-hidden="true">${esc(nome[0])}</div><div style="min-width:0"><div class="ola">Bom treino,</div><div class="nome">${esc(nome)}</div></div></div>` : `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu treino, sua evolução</div></div>`;
+    const esq = nome ? `<div class="saud"><button class="avatar-bt" data-a="menu-conta" aria-label="Menu da conta: perfil, trocar de usuário e sair"><div class="avatar">${esc(nome[0])}</div></button><div style="min-width:0"><div class="ola">Bom treino,</div><div class="nome">${esc(nome)}</div></div></div>` : `<div><div class="brand">MEU <span>TREINO</span></div><div class="eyebrow">Seu treino, sua evolução</div></div>`;
     const n = avisos().length;
     return esq + `<div class="row" style="gap:6px;flex-wrap:nowrap">${seloTeste()}<button class="sino" data-a="avisos" aria-label="Avisos${n ? ` (${n})` : ''}">${ICO.sino}${n ? '<span class="ponto"></span>' : ''}</button></div>`;
   }
@@ -1246,39 +1282,42 @@ const CONTEUDO_EX = {
 };
 
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
-/* mapa do corpo: principal em laranja, auxiliares em salmão; vista de costas quando o músculo principal é posterior */
-const CORPO_BASE = '<circle cx="50" cy="15" r="10"/><rect x="45" y="24" width="10" height="8"/><path d="M30 34 Q50 28 70 34 L73 95 Q50 103 27 95 Z"/><path d="M29 36 L19 42 L15 78 L23 80 L27 56 Z"/><path d="M71 36 L81 42 L85 78 L77 80 L73 56 Z"/><path d="M15 80 L23 82 L21 112 L13 110 Z"/><path d="M85 80 L77 82 L79 112 L87 110 Z"/><path d="M27 95 Q50 104 73 95 L72 110 L28 110 Z"/><path d="M28 108 L49 110 L47 160 L33 160 Z"/><path d="M72 108 L51 110 L53 160 L67 160 Z"/><path d="M33 162 L47 162 L45 205 L36 205 Z"/><path d="M67 162 L53 162 L55 205 L64 205 Z"/>';
-const REG_FRENTE = {
-  'Peito': '<path d="M33 40 Q41 35 49 39 L49 54 Q40 58 33 52 Z"/><path d="M67 40 Q59 35 51 39 L51 54 Q60 58 67 52 Z"/>',
-  'Ombro anterior': '<circle cx="27" cy="40" r="5.5"/><circle cx="73" cy="40" r="5.5"/>',
-  'Ombro lateral': '<ellipse cx="22" cy="43" rx="3.5" ry="6"/><ellipse cx="78" cy="43" rx="3.5" ry="6"/>',
-  'Bíceps': '<ellipse cx="21" cy="61" rx="4" ry="10"/><ellipse cx="79" cy="61" rx="4" ry="10"/>',
-  'Antebraço': '<ellipse cx="18" cy="96" rx="3.5" ry="12"/><ellipse cx="82" cy="96" rx="3.5" ry="12"/>',
-  'Core': '<rect x="42" y="58" width="16" height="34" rx="4"/>',
-  'Quadríceps': '<ellipse cx="39" cy="132" rx="7" ry="22"/><ellipse cx="61" cy="132" rx="7" ry="22"/>',
-  'Adutores': '<ellipse cx="46" cy="122" rx="3" ry="12"/><ellipse cx="54" cy="122" rx="3" ry="12"/>'
+/* figuras anatômicas (careca, proporção atlética sem exagero): silhueta contínua + músculos com contorno; metade esquerda espelhada */
+const FIG = {
+  M: {
+    silhueta: 'M60 30 L54 30 L53 37 Q44 40 36 41 Q28 42 26 52 L25 66 Q24 80 26 92 Q23 105 24 118 L23 128 Q27 133 31 128 L32 118 Q35 106 35 96 L36 92 Q37 80 37 70 L39 66 Q40 85 42 100 Q43 106 41 112 Q40 130 42 150 Q44 160 44 168 Q42 182 45 198 L44 210 L57 211 L56 200 Q57 182 55 168 Q56 160 56 150 L58 124 L60 120 Z',
+    cabeca: '<ellipse cx="60" cy="17" rx="10" ry="12"/><path d="M54 27 L66 27 L67 38 L53 38 Z"/>',
+    frente: { ombro: 'M38 41 Q29 42 27 51 Q26 60 28 66 L34 62 Q36 52 44 46 Z', peito: 'M44 45 L59 44 L59 63 Q51 68 43 65 Q38 61 38 55 Q39 48 44 45 Z', biceps: 'M27 68 Q25 79 27 90 L34 90 Q36 80 36 70 Z', antebraco: 'M26 94 Q24 106 25 117 L31 117 Q34 106 34 95 Z', abdomen: 'M52 67 L59 67 L59 77 L52 77 Z M52 79 L59 79 L59 90 L52 90 Z M52 92 L59 92 L59 104 L53 104 Z', obliquo: 'M40 68 L50 69 L51 103 L43 105 Q42 88 40 68 Z', quadriceps: 'M42 113 L55 117 L55 148 Q51 156 46 155 Q41 146 41 130 Z', adutor: 'M56 118 L59 121 L58 138 L56 145 Z', tibial: 'M45 168 Q43 182 46 196 L53 196 Q56 182 54 168 Z' },
+    costas: { trapezio: 'M53 33 L59 31 L59 60 L50 51 L40 42 Z', deltoide: 'M38 41 Q29 42 27 51 Q26 60 28 66 L34 62 Q36 52 44 46 Z', dorsal: 'M43 51 L50 53 L59 63 L59 88 Q50 92 45 83 Q41 70 43 51 Z', triceps: 'M27 67 Q25 79 27 90 L34 90 Q36 79 36 67 Z', antebraco: 'M26 94 Q24 106 25 117 L31 117 Q34 106 34 95 Z', lombar: 'M51 89 L59 89 L59 104 L50 104 Z', gluteo_medio: 'M42 100 L50 102 L49 108 L41 108 Z', gluteo: 'M42 109 L59 109 L59 126 Q50 131 44 126 Q41 117 42 109 Z', posterior: 'M42 130 L57 130 L56 155 Q51 160 46 157 Q42 145 42 130 Z', panturrilha: 'M44 165 Q42 176 46 189 L54 189 Q57 176 55 165 Z' }
+  },
+  F: {
+    silhueta: 'M60 30 L55 30 L54 37 Q47 40 40 41 Q33 42 32 51 L31 64 Q30 77 32 88 Q30 100 31 112 L30 121 Q33 126 36 121 L37 112 Q39 101 39 90 L40 87 Q41 76 41 67 L43 64 Q44 76 46 86 Q44 96 40 106 Q38 116 40 132 Q42 148 44 160 Q42 176 45 196 L44 209 L56 210 L55 198 Q56 180 55 166 Q56 156 57 148 L58 124 L60 121 Z',
+    cabeca: '<ellipse cx="60" cy="17" rx="9" ry="11.5"/><path d="M55 27 L65 27 L66 38 L54 38 Z"/>',
+    frente: { ombro: 'M41 41 Q34 42 32 50 Q31 57 33 63 L38 59 Q40 51 46 46 Z', peito: 'M46 46 L59 45 L59 61 Q52 66 45 62 Q41 58 42 53 Q43 48 46 46 Z', biceps: 'M32 65 Q30 75 32 86 L38 86 Q40 77 40 67 Z', antebraco: 'M31 90 Q29 101 30 111 L35 111 Q38 101 38 91 Z', abdomen: 'M53 66 L59 66 L59 76 L53 76 Z M53 78 L59 78 L59 88 L53 88 Z M53 90 L59 90 L59 100 L54 100 Z', obliquo: 'M45 66 L51 68 L52 100 L45 102 Q46 86 45 66 Z', quadriceps: 'M41 112 L55 116 L55 148 Q51 155 46 154 Q40 144 40 128 Z', adutor: 'M56 117 L59 120 L58 137 L56 144 Z', tibial: 'M45 166 Q43 180 46 194 L52 194 Q55 180 54 166 Z' },
+    costas: { trapezio: 'M54 33 L59 31 L59 57 L52 49 L43 42 Z', deltoide: 'M41 41 Q34 42 32 50 Q31 57 33 63 L38 59 Q40 51 46 46 Z', dorsal: 'M45 50 L51 52 L59 61 L59 85 Q52 89 47 80 Q44 67 45 50 Z', triceps: 'M32 65 Q30 75 32 86 L38 86 Q40 76 40 65 Z', antebraco: 'M31 90 Q29 101 30 111 L35 111 Q38 101 38 91 Z', lombar: 'M52 86 L59 86 L59 101 L51 101 Z', gluteo_medio: 'M41 98 L49 100 L48 107 L40 106 Z', gluteo: 'M40 107 L59 107 L59 128 Q49 133 43 127 Q38 117 40 107 Z', posterior: 'M41 131 L56 131 L55 155 Q50 159 45 156 Q40 144 41 131 Z', panturrilha: 'M44 164 Q41 175 45 187 L52 187 Q55 175 54 164 Z' }
+  }
 };
-const REG_COSTAS = {
-  'Costas': '<path d="M32 42 L48 46 L48 82 Q38 78 31 66 Z"/><path d="M68 42 L52 46 L52 82 Q62 78 69 66 Z"/>',
-  'Ombro posterior': '<circle cx="27" cy="41" r="5.5"/><circle cx="73" cy="41" r="5.5"/>',
-  'Ombro lateral': '<ellipse cx="22" cy="43" rx="3.5" ry="6"/><ellipse cx="78" cy="43" rx="3.5" ry="6"/>',
-  'Tríceps': '<ellipse cx="21" cy="61" rx="4" ry="10"/><ellipse cx="79" cy="61" rx="4" ry="10"/>',
-  'Lombar': '<rect x="43" y="82" width="14" height="12" rx="3"/>',
-  'Glúteo': '<ellipse cx="40" cy="104" rx="9" ry="8"/><ellipse cx="60" cy="104" rx="9" ry="8"/>',
-  'Glúteo médio': '<ellipse cx="34" cy="98" rx="5" ry="5"/><ellipse cx="66" cy="98" rx="5" ry="5"/>',
-  'Posterior de coxa': '<ellipse cx="40" cy="134" rx="7" ry="22"/><ellipse cx="60" cy="134" rx="7" ry="22"/>',
-  'Panturrilha': '<ellipse cx="40" cy="178" rx="5" ry="14"/><ellipse cx="60" cy="178" rx="5" ry="14"/>'
-};
+const MUSC_FRENTE = { 'Peito': ['peito'], 'Ombro anterior': ['ombro'], 'Ombro lateral': ['ombro'], 'Bíceps': ['biceps'], 'Antebraço': ['antebraco'], 'Core': ['abdomen', 'obliquo'], 'Quadríceps': ['quadriceps'], 'Adutores': ['adutor'], 'Panturrilha': ['tibial'] };
+const MUSC_ATRAS = { 'Costas': ['dorsal', 'trapezio'], 'Ombro posterior': ['deltoide'], 'Ombro lateral': ['deltoide'], 'Tríceps': ['triceps'], 'Antebraço': ['antebraco'], 'Lombar': ['lombar'], 'Glúteo': ['gluteo'], 'Glúteo médio': ['gluteo_medio'], 'Posterior de coxa': ['posterior'], 'Panturrilha': ['panturrilha'] };
 const MUSC_COSTAS = ['Costas', 'Ombro posterior', 'Tríceps', 'Lombar', 'Glúteo', 'Glúteo médio', 'Posterior de coxa', 'Panturrilha'];
+const sexoPerfil = () => (perfil().sexo === 'Feminino' ? 'F' : 'M');
 function mapaCorpo(id) {
-  const d = EX[id] || { g: [], gi: [] }, costas = MUSC_COSTAS.includes(d.g[0]), R = costas ? REG_COSTAS : REG_FRENTE;
-  const cor = g => (d.g.includes(g) ? '#FF6A00' : (d.gi || []).includes(g) ? '#FFB27A' : null);
-  const destaques = Object.entries(R).map(([g, sh]) => { const c = cor(g); return c ? `<g fill="${c}">${sh}</g>` : ''; }).join('');
-  return `<div class="mapa-box"><svg class="mapa" viewBox="0 0 100 210" role="img" aria-label="Músculos trabalhados: ${esc(d.g.join(', '))}${(d.gi || []).length ? '; auxiliares: ' + esc(d.gi.join(', ')) : ''}"><g fill="#3A3A3A">${CORPO_BASE}</g>${destaques}</svg>
-    <small><i style="background:#FF6A00"></i>Principal</small>${(d.gi || []).length ? '<small><i style="background:#FFB27A"></i>Auxiliar</small>' : ''}<small>${costas ? 'Vista de costas' : 'Vista de frente'}</small></div>`;
+  const d = EX[id] || { g: [], gi: [] }, gi = d.gi || [], costas = MUSC_COSTAS.includes(d.g[0]);
+  const F = FIG[sexoPerfil()], musc = F[costas ? 'costas' : 'frente'], mapa = costas ? MUSC_ATRAS : MUSC_FRENTE, cores = {};
+  gi.forEach(g => (mapa[g] || []).forEach(k => { cores[k] = '#FFB27A'; }));
+  d.g.forEach(g => (mapa[g] || []).forEach(k => { cores[k] = '#FF6A00'; }));
+  const lado = `<path d="${F.silhueta}" fill="#262626"/>` + Object.entries(musc).map(([k, p]) => `<path data-m="${k}" d="${p}" fill="${cores[k] || '#3D3D3D'}" stroke="#161616" stroke-width="0.8" stroke-linejoin="round"/>`).join('');
+  return `<div class="mapa-box"><svg class="mapa" viewBox="0 0 120 220" role="img" aria-label="Músculos trabalhados: ${esc(d.g.join(', '))}${gi.length ? '; auxiliares: ' + esc(gi.join(', ')) : ''}"><g fill="#262626">${F.cabeca}</g>${lado}<g transform="matrix(-1 0 0 1 120 0)">${lado}</g></svg>
+    <small><i style="background:#FF6A00"></i>Principal</small>${gi.length ? '<small><i style="background:#FFB27A"></i>Auxiliar</small>' : ''}<small>${costas ? 'Vista de costas' : 'Vista de frente'}</small></div>`;
 }
+
 /* vídeo dentro do app: um vídeo escolhido por exercício (piloto) ou o link que a pessoa fixou na Biblioteca */
-const VIDEOS_PADRAO = { supino_inclinado: 'bZtXNt7gbPY' };
+/* Book de vídeos (Treino A completo e parte do C): o link fixado pela pessoa na Biblioteca tem prioridade */
+const VIDEOS_PADRAO = {
+  supino_inclinado: 'bZtXNt7gbPY', puxada_neutra: '76zk3CD2JJQ', crucifixo: '0yDRsJ19OF4', remada_baixa: '7_6CSFfIHfk',
+  elevacao_lateral_maquina: '8GvYpmAL4zA', triceps_corda: 'M-DTY40JG9M', rosca_maquina: 'KpHxwE4jjcs',
+  crucifixo_invertido: '_7ZJJy3Z99k', triceps_frances: 'lkEoFfNyzkk', rosca_scott: 'JWRoHF7I2NQ', triceps_testa: 'LOCarvWMhNQ'
+};
 const idYoutube = url => { const m = String(url || '').match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : null; };
 const videoDe = id => idYoutube(midia().videos[id]) || VIDEOS_PADRAO[id] || null;
 function abrirVideo(exId) {
@@ -1306,6 +1345,12 @@ function avisos() {
   if (!m || agora - ms(m.data) > 30 * 864e5) l.push({ t: 'Nova medição', d: m ? `Última medição em ${dataISO(m.data)}. Registre peso e medidas na Evolução.` : 'Registre seu peso e suas medidas na Evolução.', acao: 'go:progress' });
   return l;
 }
+async function menuConta() {
+  const r = await modal(`<h3 style="margin:0">${esc(perfil().nome || nomeConta() || 'Sua conta')}</h3><p class="smalltxt" style="margin:2px 0 4px">${esc(S.auth.email || '')}</p>
+    <div style="text-align:left"><button class="aviso-item" data-r="perfil"><strong>Meu perfil</strong><small>Dados, medidas e configurações</small></button><button class="aviso-item" data-r="trocar"><strong>Trocar de usuário</strong><small>Sair e entrar com outra conta</small></button><button class="aviso-item" data-r="sair"><strong>Sair</strong><small>Encerrar a sessão neste aparelho</small></button></div>`, [['Fechar', '0', 'secondary']]);
+  if (r === 'perfil') { ir('profile'); return; }
+  if (r === 'trocar' || r === 'sair') { await sairDaConta(); if (S.auth.estado === 'fora') { S.auth.tela = r === 'trocar' ? 'entrar' : 'boasvindas'; if (r === 'sair') S.auth.msg = ''; render(); } }
+}
 async function mostrarAvisos() {
   const l = avisos();
   const corpo = l.length ? l.map(a => a.acao ? `<button class="aviso-item" data-r="${a.acao}"><strong>${esc(a.t)}</strong><small>${esc(a.d)}</small></button>` : `<div class="aviso-item"><strong>${esc(a.t)}</strong><small>${esc(a.d)}</small></div>`).join('') : '<p class="muted" style="margin:10px 0 0">Nenhum aviso agora.</p>';
@@ -1322,6 +1367,7 @@ const ICO = {
   calendario: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
   alvo: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>',
+  google: '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.5 5.8c4.4-4 6.8-10 6.8-17.2z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>',
   logo: '<svg viewBox="0 0 30 14" aria-hidden="true"><path d="M7 2v10M3.5 4v6M23 2v10M26.5 4v6M7 7h16"/></svg>',
   sino: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
   barras: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/></svg>',
@@ -1339,6 +1385,10 @@ function fotoEx(id) {
   return `<label class="foto" aria-label="Tirar foto do aparelho">${ICON_CAM}<span>Foto</span><input type="file" accept="image/*" data-foto-ex="${id}" hidden></label>`;
 }
 const linkVideo = id => midia().videos[id] || `https://www.youtube.com/results?search_query=${encodeURIComponent(nomeEx(id) + ' execução #shorts')}`;
+const MARCAS_EX = ['Ajustei o aparelho', 'Senti dor', 'Carga leve', 'Carga pesada', 'Aparelho ocupado'];
+const MARCAS_OBS = ['Dormi mal', 'Pouca energia', 'Senti dor', 'Treino corrido', 'Ótimo treino'];
+const marcas = t => String(t || '').split(' · ').map(x => x.trim()).filter(Boolean);
+const alternarMarca = (t, m) => { const l = marcas(t), i = l.indexOf(m); if (i >= 0) l.splice(i, 1); else l.push(m); return l.join(' · '); };
 function cardExFoco(id) {
   const s = S.atual, d = EX[id] || { nome: nomeEx(id), equip: '', g: [], dica: '' }, e = s.ex[id];
   const hist = historicoEx(id), ult = hist[hist.length - 1], feitos = okSets(e).length, n = e.sets.length, done = feitos === n && n > 0, orig = textoOrigem(e);
@@ -1357,10 +1407,11 @@ function cardExFoco(id) {
   h += `<div class="acoes-serie"><button class="add-set" data-a="menos-serie" aria-label="Remover uma série">− Série</button><button class="add-set" data-a="mais-serie" aria-label="Adicionar uma série">+ Série</button><button class="validar-todas" data-a="todas" ${done ? 'disabled' : ''}>${done ? '✓ Todas validadas' : '✓ Validar todas'}</button></div>`;
   if (e.enviado) h += `<div class="enviado"><span>✓ ${esc(e.dif || 'Registrado')}${e.desc ? ' · ' + esc(e.desc) : ''}</span><button data-a="editar-envio">Editar</button></div>`;
   else {
-    const aberta = S.notas.has(id) || !!e.desc;
+    const aberta = S.notas.has(id) || marcas(e.desc).some(m => !MARCAS_EX.includes(m));
     h += `<div class="dif-bloco"><div class="smalltxt" style="font-size:13px;margin-bottom:6px">Como foi esse exercício?</div>
       <div class="dif" role="group" aria-label="Dificuldade de ${esc(d.nome)}">${['Fácil', 'Moderado', 'Difícil'].map(x => `<button data-a="dif" data-n="${x}" aria-pressed="${e.dif === x}">${x}</button>`).join('')}</div>
-      ${aberta ? `<div class="field" style="margin-top:8px"><textarea rows="2" data-desc maxlength="300" placeholder="Anotação importante: ajuste do aparelho, dor, sensação…" aria-label="Anotação sobre ${esc(d.nome)}">${esc(e.desc || '')}</textarea></div>` : `<button class="lnk" style="margin-top:6px" data-a="nota-abrir">+ Anotação</button>`}</div>`;
+      <div class="smalltxt" style="font-size:13px;margin:12px 0 6px">Algo a anotar? (opcional)</div><div class="chips peq">${MARCAS_EX.map(m => `<button class="chip" data-a="marca-ex" data-t="${m}" aria-pressed="${marcas(e.desc).includes(m)}">${m}</button>`).join('')}</div>
+      ${aberta ? `<div class="field" style="margin-top:8px"><textarea rows="2" data-desc maxlength="300" placeholder="Escreva se quiser" aria-label="Anotação sobre ${esc(d.nome)}">${esc(e.desc || '')}</textarea></div>` : `<button class="lnk" style="margin-top:6px" data-a="nota-abrir">+ Escrever</button>`}</div>`;
   }
   const k = e.sets.findIndex(st => !st.ok), prox = proximoPendente(id);
   const ck = '<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12l5 5 9-10"/></svg>';
@@ -1393,7 +1444,7 @@ function cardEx(id) {
   h += `<div class="acoes-serie"><button class="add-set" data-a="menos-serie" aria-label="Remover uma série">− Série</button><button class="add-set" data-a="mais-serie" aria-label="Adicionar uma série">+ Série</button><button class="validar-todas" data-a="todas" ${done ? 'disabled' : ''}>${done ? '✓ Todas validadas' : '✓ Validar todas'}</button></div>`;
   if (e.enviado) h += `<div class="enviado"><span>✓ ${esc(e.dif || 'Registrado')}${e.desc ? ' · ' + esc(e.desc) : ''}</span><button data-a="editar-envio">Editar</button></div>`;
   else {
-    const aberta = S.notas.has(id) || !!e.desc;
+    const aberta = S.notas.has(id) || marcas(e.desc).some(m => !MARCAS_EX.includes(m));
     h += `<div class="dif-bloco"><div class="smalltxt" style="font-size:13px;margin-bottom:6px">Como foi esse exercício?</div>
       <div class="dif" role="group" aria-label="Dificuldade de ${esc(d.nome)}">${['Fácil', 'Moderado', 'Difícil'].map(n => `<button data-a="dif" data-n="${n}" aria-pressed="${e.dif === n}">${n}</button>`).join('')}</div>
       ${aberta ? `<div class="field" style="margin-top:8px"><textarea rows="2" data-desc maxlength="300" placeholder="Anotação importante: ajuste do aparelho, dor, sensação…" aria-label="Anotação sobre ${esc(d.nome)}">${esc(e.desc || '')}</textarea></div>` : `<button class="lnk" style="margin-top:6px" data-a="nota-abrir">+ Anotação importante</button>`}
@@ -1427,7 +1478,7 @@ function irProximoEx(id) {
 }
 function midiaEx(id) {
   const vid = videoDe(id), nome = esc(nomeEx(id));
-  if (vid) return `<div class="exv-midia"><iframe src="https://www.youtube-nocookie.com/embed/${vid}?playsinline=1&rel=0&modestbranding=1" title="Vídeo de execução: ${nome}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
+  if (vid) return `<div class="exv-midia"><iframe src="https://www.youtube-nocookie.com/embed/${vid}?playsinline=1&rel=0&modestbranding=1" title="Vídeo de execução: ${nome}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div><div class="exv-reserva"><a href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">Vídeo não abriu? Abrir no YouTube</a></div>`;
   const k = FOTO_EX[id];
   if (k && FOTOS[k]) return `<div class="exv-midia"><img src="${FOTOS[k]}" alt="Execução: ${nome}"><a class="exv-yt" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Vídeos no YouTube</a></div>`;
   return `<div class="exv-midia vazio">${ICO.haltere}<span>Vídeo deste exercício em breve</span><a class="btn ghost small" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Ver vídeos no YouTube</a></div>`;
@@ -1480,7 +1531,8 @@ function vSession() {
       <button class="complete-session ${s.forcaOk ? 'done' : ''}" data-a="forca">${s.forcaOk ? '✓ Musculação concluída' : 'Concluir sessão de musculação'}</button></div>
     <div class="card" id="cardio-card">${cardioInner()}</div>
     <div class="card" id="final-card"><div class="field"><span>Como foi a sessão?</span><div class="esforco" role="group" aria-label="Esforço da sessão">${ESFORCOS.map(([n]) => `<button data-a="esforco" data-n="${n}" aria-pressed="${s.esforco === n}">${n}</button>`).join('')}</div></div>
-      <div class="field" style="margin-top:10px"><label for="obs">Observações gerais</label><textarea id="obs" data-obs rows="3" placeholder="Energia, desconforto, sono, disposição…">${esc(s.obs || '')}</textarea></div>
+      <div class="field" style="margin-top:12px"><span>Observações (opcional)</span><div class="chips peq" style="margin-top:6px">${MARCAS_OBS.map(m => `<button class="chip" data-a="marca-obs" data-t="${m}" aria-pressed="${marcas(s.obs).includes(m)}">${m}</button>`).join('')}</div></div>
+      ${S.obsAberta || marcas(s.obs).some(m => !MARCAS_OBS.includes(m)) ? `<div class="field" style="margin-top:8px"><textarea id="obs" data-obs rows="2" placeholder="Escreva se quiser">${esc(s.obs || '')}</textarea></div>` : `<button class="lnk" style="margin-top:6px" data-a="obs-abrir">+ Escrever</button>`}
       <button class="btn full" style="margin-top:14px" data-a="salvar">Finalizar e salvar treino</button>
       <button class="lnk" style="margin-top:8px" data-a="descartar">Descartar este treino</button></div>`;
   return h;
@@ -1594,6 +1646,35 @@ function grafico(pontos, o) {
     <text x="${P.l}" y="${H - 6}" class="tx">${dataCurta(xMin)}</text><text x="${W - P.r}" y="${H - 6}" text-anchor="end" class="tx">${dataCurta(xMax)}</text></svg>`;
 }
 const botaoFoto = pre => (S.fotoOk ? `<label class="btn secondary small" style="display:inline-flex;align-items:center;cursor:pointer">📷 Ler foto do exame<input type="file" accept="image/*" data-foto="${pre}" hidden></label><p class="smalltxt" data-foto-st="${pre}" style="margin-top:6px">Tire uma foto ou print do laudo: os valores são preenchidos para você conferir.</p>` : '');
+function botaoAnexo(pre) {
+  const a = S.anexos[pre];
+  return `<div class="anexo" data-anexo-box="${pre}">${a ? `<span class="pill ok">📎 ${esc(a.nome)}</span><button class="lnk" data-a="anexo-remover" data-pre="${pre}">Remover</button>`
+    : `<label class="btn secondary small" style="display:inline-flex;align-items:center;cursor:pointer">📎 Anexar exame (PDF ou foto)<input type="file" accept="application/pdf,image/*" data-anexo="${pre}" hidden></label>`}</div>`;
+}
+async function anexarExame(pre, arq) {
+  if (!sb || !USUARIO) { toast('Entre na sua conta para anexar o exame'); return; }
+  if (arq.size > 10 * 1024 * 1024) { toast('Arquivo grande demais: o máximo é 10 MB'); return; }
+  toast('Enviando o exame…', 6000);
+  let blob = arq, type = arq.type || (/\.pdf$/i.test(arq.name || '') ? 'application/pdf' : 'image/jpeg');
+  if (type.startsWith('image/')) { try { const r = await reduzirImagem(arq, 1800); blob = r.blob; type = r.type || 'image/jpeg'; } catch (e) {} }
+  const ext = type === 'application/pdf' ? 'pdf' : 'jpg', caminho = `${USUARIO}/exames/${Date.now()}.${ext}`;
+  try {
+    const { error } = await comPrazo(sb.storage.from('fotos').upload(caminho, blob, { contentType: type, upsert: false }), 45000);
+    if (error) throw error;
+    S.anexos[pre] = { ref: 'sb:' + caminho, nome: arq.name || 'exame.' + ext, tipo: type };
+    const box = document.querySelector(`[data-anexo-box="${pre}"]`); if (box) box.outerHTML = botaoAnexo(pre);
+    toast('Exame anexado. Ele fica salvo junto com a medição.');
+  } catch (err) { toast(falhaDeRede(err) ? 'Sem conexão: anexe o exame quando a internet voltar.' : `Não foi possível anexar (${motivo(err)})`, 7000); }
+}
+async function verExame(ref) {
+  if (!sb || !ref) return;
+  const janela = window.open('', '_blank');
+  try {
+    const { data, error } = await sb.storage.from('fotos').createSignedUrl(String(ref).replace(/^sb:/, ''), 600);
+    if (error || !data) throw error || new Error('sem link');
+    if (janela) janela.location = data.signedUrl; else window.location.href = data.signedUrl;
+  } catch (err) { if (janela) janela.close(); toast(`Não foi possível abrir o exame (${motivo(err)})`); }
+}
 function camposBio(pre, valores) {
   return `<div class="fields">${CAMPOS_BIO.map(([k, n]) => `<div class="field"><label for="${pre}${k}">${n}</label><input id="${pre}${k}" inputmode="decimal" value="${esc(numBR(valores && valores[k]))}"></div>`).join('')}</div>`;
 }
@@ -1613,11 +1694,11 @@ function vProgress() {
   h += `<p class="smalltxt" style="margin-top:8px">${prim ? `Medições de ${dataISO(prim.data)} a ${dataISO(ult.data)}. ` : ''}Adicione novas medições para ampliar o gráfico.</p></div>`;
   const bio = [...lista].reverse().find(m => m.magra != null || m.muscular != null || m.gorda != null);
   h += `<div class="card"><h3>Última bioimpedância</h3>${bio ? `<p class="smalltxt">${dataISO(bio.data)}</p>` + [['gorda', 'Massa gorda', ' kg'], ['magra', 'Massa magra', ' kg'], ['muscular', 'Massa muscular', ' kg'], ['agua', 'Água corporal', ' L'], ['visceral', 'Gordura visceral', '']].filter(([k]) => bio[k] != null).map(([k, n, u]) => `<div class="linha-info"><span class="muted">${n}</span><strong>${numBR1(bio[k])}${u}</strong></div>`).join('') : '<p class="smalltxt">Nenhuma bioimpedância registrada.</p>'}</div>`;
-  h += `<div class="card"><h3>Adicionar medição</h3>${botaoFoto('m-')}
+  h += `<div class="card"><h3>Adicionar medição</h3>${botaoAnexo('m-')}${botaoFoto('m-')}
     <div class="fields" style="margin-top:8px"><div class="field"><label for="m-data">Data</label><input type="date" id="m-data" value="${hojeISO()}"></div><div class="field"><label for="m-cintura">Cintura (cm)</label><input id="m-cintura" inputmode="decimal" placeholder="Opcional"></div></div>
     <div style="margin-top:9px">${camposBio('m-', null)}</div>
     <button class="btn full" style="margin-top:12px" data-a="med-salvar">Salvar medição</button>
-    ${lista.length ? `<details class="lista-ex"><summary>Medições registradas (${lista.length})</summary><ul>${lista.slice().reverse().map(m => `<li><span>${dataISO(m.data)}: ${[m.peso != null ? numBR1(m.peso) + ' kg' : '', m.cintura != null ? numBR1(m.cintura) + ' cm' : '', m.gordura != null ? numBR1(m.gordura) + '%' : ''].filter(Boolean).join(', ')}</span>${m.doPerfil ? '<span>perfil</span>' : `<button class="lnk perigo" data-a="med-apagar" data-id="${esc(m.id)}">Apagar</button>`}</li>`).join('')}</ul></details>` : ''}</div>`;
+    ${lista.length ? `<details class="lista-ex"><summary>Medições registradas (${lista.length})</summary><ul>${lista.slice().reverse().map(m => `<li><span>${dataISO(m.data)}: ${[m.peso != null ? numBR1(m.peso) + ' kg' : '', m.cintura != null ? numBR1(m.cintura) + ' cm' : '', m.gordura != null ? numBR1(m.gordura) + '%' : ''].filter(Boolean).join(', ')}</span><span class="row" style="gap:10px;flex-wrap:nowrap">${m.exame ? `<button class="lnk" data-a="ver-exame" data-ref="${esc(m.exame.ref)}">📎 Exame</button>` : ''}${m.doPerfil ? '<span>perfil</span>' : `<button class="lnk perigo" data-a="med-apagar" data-id="${esc(m.id)}">Apagar</button>`}</span></li>`).join('')}</ul></details>` : ''}</div>`;
   h += secaoForca();
   h += `<div class="card"><h3>Volume dos últimos 7 dias</h3><p class="smalltxt">Séries validadas por grupo muscular; o trabalho indireto conta meia série. A barra cheia equivale a ${META_SEMANA} séries.</p>${barras(volume(Date.now() - 7 * 864e5), GRUPOS)}</div>`;
   const ss14 = validas().filter(s => ms(s.inicio) >= Date.now() - 14 * 864e5);
@@ -1882,6 +1963,55 @@ function opcoes(lista, atual) {
   const todas = atual && !lista.includes(atual) ? [atual, ...lista] : lista;
   return todas.map(o => `<option ${o === atual ? 'selected' : ''}>${esc(o)}</option>`).join('');
 }
+const PARQ = [
+  ['Algum médico já disse que você tem problema no coração e que só deve fazer atividade física com orientação médica?', 'problema no coração com orientação médica'],
+  ['Você sente dor no peito quando faz atividade física?', 'dor no peito ao se exercitar'],
+  ['No último mês, você sentiu dor no peito mesmo sem fazer atividade física?', 'dor no peito em repouso no último mês'],
+  ['Você perde o equilíbrio por tontura ou já desmaiou?', 'tontura ou desmaio'],
+  ['Você tem algum problema nos ossos ou nas articulações que pode piorar com exercício?', 'problema em ossos ou articulações'],
+  ['Você toma remédio para pressão ou para o coração?', 'remédio para pressão ou coração'],
+  ['Existe algum outro motivo para você não fazer atividade física?', 'outro motivo informado']
+];
+const DORES = ['Nenhuma', 'Joelho', 'Lombar', 'Ombro', 'Quadril', 'Pescoço', 'Punho ou cotovelo', 'Tornozelo', 'Outra'];
+const PRAZOS = [4, 8, 12, 16, 24];
+const nomeConta = () => { const m = (S.auth.user && S.auth.user.user_metadata) || {}; return (m.nome || m.full_name || m.name || '').trim(); };
+function dadosDoPerfil(p) {
+  return { nome: p.nome || nomeConta(), sexo: p.sexo || null, idade: p.idade ?? null, altura: p.altura ? Math.round(p.altura * 100) : null, experiencia: p.experiencia || 'Iniciante',
+    objetivo: p.objetivo || OBJETIVOS[0], prazo: p.prazo || 8, programa: progDe(p) || 'corpo', parq: Object.assign({}, p.parq || {}), dores: (p.dores || []).slice(), doresOutra: p.doresOutra || '', bio: false };
+}
+function textoSaude(d) {
+  const partes = [], sims = PARQ.filter((q, i) => d.parq && d.parq[i + 1] === true).map(q => q[1]);
+  if (sims.length) partes.push('PAR-Q com resposta sim: ' + sims.join('; '));
+  const dores = (d.dores || []).filter(x => x !== 'Nenhuma' && x !== 'Outra');
+  if (dores.length) partes.push('Dores ou lesões: ' + dores.join(', '));
+  if (d.doresOutra) partes.push('Outra: ' + d.doresOutra);
+  return partes.join('. ') || 'nenhuma';
+}
+function perfilDosDados(d, base) {
+  const p = Object.assign({}, base || {}, { id: 'perfil', tipo: 'perfil' });
+  p.nome = (d.nome || '').trim() || nomeConta() || 'Atleta'; p.sexo = d.sexo; p.idade = num(d.idade);
+  const alt = num(d.altura); p.altura = alt ? (alt > 3 ? alt / 100 : alt) : null;
+  p.experiencia = d.experiencia; p.objetivo = d.objetivo; p.prazo = num(d.prazo) || 8; p.programa = d.programa;
+  p.parq = Object.assign({}, d.parq); p.dores = (d.dores || []).slice(); p.doresOutra = (d.doresOutra || '').trim(); p.saude = textoSaude(p);
+  return p;
+}
+const dadosCad = () => (S.page === 'profile' ? S.ed : (S.cad && S.cad.d));
+const chip = (campo, valor, rotulo, ativo) => `<button class="chip" data-a="cad-op" data-campo="${campo}" data-valor="${esc(String(valor))}" aria-pressed="${!!ativo}">${esc(rotulo)}</button>`;
+function secaoCadastro(passo, d, pre) {
+  if (passo === 1) return `<div class="cad-sec"><label class="rot" for="${pre}nome">Como você quer ser chamado?</label><div class="field"><input id="${pre}nome" data-cad="nome" value="${esc(d.nome || '')}" autocomplete="given-name" maxlength="60" placeholder="Seu nome"></div></div>
+    <div class="cad-sec"><span class="rot">Sexo</span><div class="chips">${['Masculino', 'Feminino'].map(x => chip('sexo', x, x, d.sexo === x)).join('')}</div></div>
+    <div class="cad-sec cad-dupla"><div><span class="rot">Idade</span><div class="num-step"><button data-a="cad-num" data-campo="idade" data-d="-1" aria-label="Diminuir idade">−</button><input id="${pre}idade" data-cad="idade" inputmode="numeric" value="${esc(d.idade ?? '')}" placeholder="anos" aria-label="Idade"><button data-a="cad-num" data-campo="idade" data-d="1" aria-label="Aumentar idade">+</button></div></div>
+      <div><span class="rot">Altura (cm)</span><div class="num-step"><button data-a="cad-num" data-campo="altura" data-d="-1" aria-label="Diminuir altura">−</button><input id="${pre}altura" data-cad="altura" inputmode="numeric" value="${esc(d.altura ?? '')}" placeholder="cm" aria-label="Altura em centímetros"><button data-a="cad-num" data-campo="altura" data-d="1" aria-label="Aumentar altura">+</button></div></div></div>
+    <div class="cad-sec"><span class="rot">Experiência com musculação</span><div class="chips">${['Iniciante', 'Intermediária', 'Avançada'].map(x => chip('experiencia', x, x, d.experiencia === x)).join('')}</div></div>`;
+  if (passo === 2) return `<div class="cad-sec"><span class="rot">Objetivo principal</span><div class="chips">${OBJETIVOS.map(x => chip('objetivo', x, x, d.objetivo === x)).join('')}</div></div>
+    <div class="cad-sec"><span class="rot">Prazo do objetivo</span><div class="chips">${PRAZOS.map(x => chip('prazo', x, x + ' semanas', +d.prazo === x)).join('')}</div></div>
+    <div class="cad-sec"><span class="rot">Programa de treino</span>${Object.entries(PROGRAMAS).map(([k, P]) => `<button class="prog-op" data-a="cad-op" data-campo="programa" data-valor="${k}" aria-pressed="${d.programa === k}"><strong>${esc(P.nome)}${k === 'principal' ? ' · recomendado' : ''}</strong><small>${P.dias} treinos por semana · ${esc(P.duracao)}</small></button>`).join('')}</div>`;
+  const algumSim = PARQ.some((q, i) => d.parq[i + 1] === true);
+  return `<div class="cad-sec"><span class="rot">Prontidão para atividade física (PAR-Q)</span>${PARQ.map((q, i) => `<div class="parq"><p>${esc(q[0])}</p><div class="simnao" role="group" aria-label="Resposta da pergunta ${i + 1}"><button data-a="cad-parq" data-q="${i + 1}" data-v="1" aria-pressed="${d.parq[i + 1] === true}">Sim</button><button data-a="cad-parq" data-q="${i + 1}" data-v="0" aria-pressed="${d.parq[i + 1] === false}">Não</button></div></div>`).join('')}
+      ${algumSim ? `<p class="alerta" style="margin-top:10px">Você respondeu "sim" a alguma pergunta. Recomendamos uma liberação médica antes de começar ou de aumentar a intensidade dos treinos.</p>` : ''}</div>
+    <div class="cad-sec"><span class="rot">Dores ou lesões</span><div class="chips">${DORES.map(x => chip('dores', x, x, (d.dores || []).includes(x))).join('')}</div>
+      ${(d.dores || []).includes('Outra') ? `<div class="field" style="margin-top:8px"><input data-cad="doresOutra" value="${esc(d.doresOutra || '')}" maxlength="120" placeholder="Qual? (opcional)" aria-label="Outra dor ou lesão"></div>` : ''}</div>`;
+}
 function formPerfil(p, pre) {
   return `<div class="fields">
     <div class="field larga"><label for="${pre}nome">Nome</label><input id="${pre}nome" value="${esc(p.nome || '')}" autocomplete="given-name" maxlength="60"></div>
@@ -1919,7 +2049,8 @@ function vProfile() {
       ${ultimaCom('peso') ? `<div class="linha-info"><span class="muted">Peso de referência</span><strong>${numBR1(ultimaCom('peso').peso)} kg</strong></div>` : ''}
       <button class="btn secondary small" style="margin-top:10px" data-a="editar-perfil">${S.editarPerfil ? 'Fechar edição' : 'Editar perfil'}</button></div>`;
   if (S.editarPerfil) {
-    h += `<div class="card"><h3>Editar perfil</h3>${formPerfil(p, 'p-')}
+    if (!S.ed) S.ed = dadosDoPerfil(p);
+    h += `<div class="card"><h3>Editar perfil</h3>${secaoCadastro(1, S.ed, 'p-')}${secaoCadastro(2, S.ed, 'p-')}${secaoCadastro(3, S.ed, 'p-')}<div class="cad-sec"><span class="rot">Exame de referência</span>${botaoAnexo('pr-')}${p.refExame ? `<button class="lnk" data-a="ver-exame" data-ref="${esc(p.refExame.ref)}">📎 Ver exame salvo</button>` : ''}</div>
       <h3 style="margin-top:16px">Bioimpedância de referência</h3>${botaoFoto('pr-')}
       <div class="fields" style="margin-top:8px"><div class="field larga"><label for="pr-data">Data do exame</label><input type="date" id="pr-data" value="${esc(p.refData || '')}"></div></div>
       <div style="margin-top:9px">${camposBio('pr-', p.ref || {})}</div>
@@ -1936,6 +2067,20 @@ function vProfile() {
   return h;
 }
 function vOnboarding() {
+  if (!S.cad) S.cad = { passo: 1, d: dadosDoPerfil({ programa: 'corpo' }) };
+  const c = S.cad, p = c.passo, d = c.d, titulos = ['Vamos começar?', 'Objetivo e programa', 'Sua saúde'];
+  let h = `<div class="card" style="max-width:520px;margin:10px auto"><div class="row between"><div class="eyebrow">Primeiro acesso · passo ${p} de 3</div><button class="lnk" data-a="auth-sair">Sair</button></div>
+    <h2 style="font-size:28px;margin:4px 0 0">${titulos[p - 1]}</h2><div class="cad-passos" aria-hidden="true">${[1, 2, 3].map(i => `<span class="${i <= p ? 'on' : ''}"></span>`).join('')}</div>
+    ${p === 1 ? '<p class="muted" style="margin:8px 0 0">Responda tocando nas opções. Só o nome é necessário; o resto você pode pular.</p>' : ''}
+    ${secaoCadastro(p, d, 'o-')}`;
+  if (p === 3) h += `<div class="cad-sec"><span class="rot">Exame de bioimpedância</span><div class="chips">${chip('bio', d.bio ? '0' : '1', d.bio ? '✓ Tenho um exame' : 'Tenho um exame', d.bio)}</div>
+    ${d.bio ? `${botaoAnexo('o-')}${botaoFoto('o-')}<div class="fields" style="margin-top:8px"><div class="field larga"><label for="o-data">Data do exame</label><input type="date" id="o-data"></div></div><div style="margin-top:9px">${camposBio('o-', null)}</div>` : ''}</div>`;
+  h += `<div class="row" style="margin-top:20px;flex-wrap:nowrap">${p > 1 ? `<button class="btn secondary" data-a="cad-passo" data-p="${p - 1}">Voltar</button>` : ''}${p < 3 ? `<button class="btn full cta" style="flex:1" data-a="cad-passo" data-p="${p + 1}">Continuar</button>` : `<button class="btn full cta" style="flex:1" data-a="cadastro">Concluir cadastro</button>`}</div>
+    <div class="row between" style="margin-top:10px"><button class="lnk" data-a="importar">Já tenho um backup: importar arquivo</button><button class="lnk" data-a="pular-cadastro">Agora não</button></div>
+    <input type="file" id="arq-import" accept="application/json,.json" hidden></div>`;
+  return h;
+}
+function vOnboardingAntigo() {
   return `<div class="card" style="max-width:520px;margin:10px auto">
     <div class="eyebrow">Primeiro acesso · perfil inicial</div><h2 style="font-size:25px">Vamos começar?</h2>
     <p class="muted">Crie seu perfil para preparar seu plano de treino. Seus dados ficam salvos na sua conta.</p>
@@ -2107,7 +2252,7 @@ async function salvarTreino() {
   const s = S.atual, f = contarFeitas(s), c = s.cardio;
   if (c.rodando) { c.acumulado = cardioDecorrido(c); c.rodando = false; c.inicioMs = null; if (!c.feito) { c.seg = Math.round(c.acumulado); c.feito = c.seg > 0; } }
   if (!f.ok && !c.seg) { toast('Nada registrado ainda para salvar'); return; }
-  if (f.ok && !s.forcaOk && !await confirmar('A musculação não foi marcada como concluída. Salvar assim mesmo?', 'Salvar', 'Voltar')) return;
+  /* salva direto: não trava se a musculação não foi marcada */
   s.status = 'concluido'; s.fim = new Date().toISOString(); s.forcaOk = s.forcaOk || f.ok > 0;
   const e = ESFORCOS.find(([n]) => n === s.esforco); s.rpe = e ? e[1] : null;
   S.atual = null; LS.del('mt_atual'); clearTimeout(tSalvar);
@@ -2135,6 +2280,23 @@ async function tratarClique(ev) {
       ir('session'); manterTelaLigada(); break;
     }
     case 'voltar': voltar(); break;
+    case 'menu-conta': menuConta(); break;
+    case 'auth-google': { if (!sb) return; const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlApp() } }); if (error) { S.auth.erro = msgAuth(error); render(); } break; }
+    case 'cad-passo': { S.cad.passo = Math.max(1, Math.min(3, +b.dataset.p)); render(); window.scrollTo(0, 0); break; }
+    case 'cad-op': {
+      const d = dadosCad(); if (!d) return; const c = b.dataset.campo, v = b.dataset.valor;
+      if (c === 'dores') { const l = d.dores || (d.dores = []), i = l.indexOf(v); if (v === 'Nenhuma') d.dores = i >= 0 ? [] : ['Nenhuma']; else { if (i >= 0) l.splice(i, 1); else { l.push(v); const n = l.indexOf('Nenhuma'); if (n >= 0) l.splice(n, 1); } } }
+      else if (c === 'bio') d.bio = v === '1';
+      else d[c] = c === 'prazo' ? +v : v;
+      render(); break;
+    }
+    case 'cad-parq': { const d = dadosCad(); if (!d) return; d.parq[b.dataset.q] = b.dataset.v === '1'; render(); break; }
+    case 'cad-num': { const d = dadosCad(); if (!d) return; const c = b.dataset.campo, base = num(d[c]) || (c === 'idade' ? 30 : 170); d[c] = Math.max(1, base + (+b.dataset.d)); const el = b.parentElement.querySelector('input'); if (el) el.value = d[c]; break; }
+    case 'anexo-remover': { delete S.anexos[b.dataset.pre]; const box = document.querySelector(`[data-anexo-box="${b.dataset.pre}"]`); if (box) box.outerHTML = botaoAnexo(b.dataset.pre); break; }
+    case 'ver-exame': verExame(b.dataset.ref); break;
+    case 'marca-ex': { const art = b.closest('[data-ex]'), ex = s.ex[art.dataset.ex]; ex.desc = alternarMarca(ex.desc, b.dataset.t); art.outerHTML = cardEx(art.dataset.ex); salvarAtual(true); break; }
+    case 'marca-obs': { s.obs = alternarMarca(s.obs, b.dataset.t); b.setAttribute('aria-pressed', String(marcas(s.obs).includes(b.dataset.t))); const t = $('#obs'); if (t) t.value = s.obs; salvarAtual(true); break; }
+    case 'obs-abrir': { S.obsAberta = true; render(); const t = $('#obs'); if (t) t.focus(); break; }
     case 'video': abrirVideo(b.dataset.exId); break;
     case 'avisos': mostrarAvisos(); break;
     case 'auth-tela': S.auth.tela = b.dataset.t; S.auth.erro = ''; S.auth.msg = ''; render(); break;
@@ -2207,7 +2369,7 @@ async function tratarClique(ev) {
       if (a === 'dif') { e.dif = b.dataset.n; art.querySelectorAll('[data-a="dif"]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); salvarAtual(true); return; }
       if (a === 'nota-abrir') { S.notas.add(id); art.outerHTML = cardEx(id); const t = document.querySelector(`[data-ex="${id}"] [data-desc]`); if (t) t.focus(); return; }
       if (a === 'enviar') {
-        if (!e.dif) { toast('Escolha fácil, moderado ou difícil'); const dd = art.querySelector('.dif'); if (dd && dd.scrollIntoView) dd.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+        if (!e.dif) { e.dif = 'Moderado'; toast('Sem dificuldade escolhida: registrado como moderado'); }
         e.enviado = true; e.enviadoEm = new Date().toISOString(); salvarAtual(true, true);
         if (s.foco === id) { pararTimer(); irProximoEx(id); return; }
         art.outerHTML = cardEx(id); toast('Registrado no treino'); return;
@@ -2279,7 +2441,8 @@ async function tratarClique(ev) {
     case 'apagar': if (!await confirmar('Apagar este treino do histórico? Não dá para desfazer.', 'Apagar', 'Cancelar')) return; await apagarDoc(b.dataset.id); S.aberto = null; render(); toast('Treino apagado'); break;
     case 'med-salvar': {
       const m = Object.assign({ id: 'm' + Date.now(), tipo: 'medida', data: $('#m-data').value || hojeISO(), cintura: num($('#m-cintura').value) }, lerBio('m-'));
-      if (CAMPOS_TODOS.every(k => m[k] == null)) { toast('Preencha ao menos um valor'); return; }
+      if (S.anexos['m-']) { m.exame = S.anexos['m-']; delete S.anexos['m-']; }
+      if (CAMPOS_TODOS.every(k => m[k] == null) && !m.exame) { toast('Preencha ao menos um valor ou anexe o exame'); return; }
       gravarDoc(m); render(); toast('Medição salva'); break;
     }
     case 'med-apagar': if (!await confirmar('Apagar esta medição?', 'Apagar', 'Cancelar')) return; await apagarDoc(b.dataset.id); render(); break;
@@ -2291,18 +2454,19 @@ async function tratarClique(ev) {
     case 'importar': $('#arq-import').click(); break;
     case 'ia': analisar(); break;
     case 'ia-parar': if (S.ia.ctl) S.ia.ctl.abort(); break;
-    case 'editar-perfil': S.editarPerfil = !S.editarPerfil; render(); break;
+    case 'editar-perfil': S.ed = null; S.editarPerfil = !S.editarPerfil; render(); break;
     case 'perfil-salvar': {
-      const p = lerPerfil('p-', perfil());
+      const p = perfilDosDados(S.ed || dadosDoPerfil(perfil()), perfil()); S.ed = null;
+      if (S.anexos['pr-']) { p.refExame = S.anexos['pr-']; delete S.anexos['pr-']; }
       p.refData = $('#pr-data').value || null; p.ref = lerBio('pr-');
       gravarDoc(p); S.editarPerfil = false; render(); toast('Perfil salvo'); break;
     }
     case 'cadastro': {
-      const p = lerPerfil('o-', {});
-      if (!p.nome) { toast('Informe seu nome'); $('#o-nome').focus(); return; }
-      if (!p.saude) { toast('Conte se há dores ou restrições (ou escreva: nenhuma)'); $('#o-saude').focus(); return; }
-      const bio = lerBio('o-'), dataBio = $('#o-data').value;
+      const p = perfilDosDados(S.cad ? S.cad.d : dadosDoPerfil({}), {});
+      const bio = lerBio('o-'), dataBio = ($('#o-data') || {}).value;
       if (Object.keys(bio).length) { p.ref = bio; p.refData = dataBio || hojeISO(); }
+      if (S.anexos['o-']) { p.refExame = S.anexos['o-']; delete S.anexos['o-']; if (!p.refData) p.refData = dataBio || hojeISO(); }
+      S.cad = null;
       gravarDoc(p); ir('home'); toast(`Perfil criado. Bom treino, ${p.nome}!`); break;
     }
     case 'pular-cadastro': S.pularOnb = true; render(); break;
@@ -2372,6 +2536,7 @@ app.addEventListener('input', e => {
     const vz = $('#busca-vazia'); if (vz) vz.hidden = algum; return;
   }
   if (el.hasAttribute('data-perg')) { S.pergunta = el.value; return; }
+  if (el.dataset.cad) { const d = dadosCad(); if (d) d[el.dataset.cad] = el.value; return; }
   if (S.page !== 'session' || !S.atual) return;
   const s = S.atual, art = el.closest('[data-ex]');
   if (el.dataset.f && art) {
@@ -2392,6 +2557,7 @@ app.addEventListener('change', async e => {
   const el = e.target;
   if (el.id === 'sel-forca') { S.exForca = el.value; render(); return; }
   if (el.dataset.foto) { const arq = el.files && el.files[0]; if (arq) lerExame(arq, el.dataset.foto); el.value = ''; return; }
+  if (el.dataset.anexo) { const arq = el.files && el.files[0]; if (arq) anexarExame(el.dataset.anexo, arq); el.value = ''; return; }
   if (el.id === 'arq-import') {
     const arq = el.files && el.files[0]; if (!arq) return;
     let dados;
