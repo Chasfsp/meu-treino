@@ -1,8 +1,10 @@
 /* Meu Treino: funciona sem internet e busca atualizações quando há conexão */
-const VERSAO = '4.7';
+const VERSAO = '4.8';
 /* oficial e teste ficam no mesmo domínio: cada um usa e limpa só a própria cópia */
 const AMB = self.registration.scope.includes('/meu-treino-teste/') ? 'teste' : 'oficial';
 const CACHE = `meu-treino-${AMB}-${VERSAO}`;
+/* fotos dos exercícios: cópia própria, mantida entre versões do app (só muda quando os arquivos de fotos mudam) */
+const CACHE_FOTOS = 'meu-treino-fotos-v1';
 const ARQUIVOS = ['./', './index.html', './fotos.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js'];
 self.addEventListener('install', e => {
@@ -18,7 +20,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin === location.origin && (url.pathname.includes('/img/') || /\/fotos-ex-\d+\.js$/.test(url.pathname))) {
     /* fotos dos exercícios: a cópia guardada primeiro; na primeira vez, da rede */
-    e.respondWith(caches.match(req).then(r => r || fetch(req).then(resp => { if (resp.ok) { const copia = resp.clone(); caches.open(CACHE).then(c => c.put(req, copia)); } return resp; })));
+    e.respondWith(caches.match(req).then(r => r || fetch(req).then(resp => { if (resp.ok) { const copia = resp.clone(); caches.open(CACHE_FOTOS).then(c => c.put(req, copia)); } return resp; })));
   } else if (url.origin === location.origin) {
     /* o app: rede primeiro, para pegar atualizações; sem internet, a cópia guardada */
     e.respondWith(fetch(req).then(r => { const copia = r.clone(); caches.open(CACHE).then(c => c.put(req, copia)); return r; })
