@@ -365,7 +365,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 .exv-capa img{ width:100%; height:100%; object-fit:cover; display:block; }
 .exv-play{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:64px; height:64px; border-radius:50%; background:rgba(255,106,0,.94); color:#1A0E05; font-size:24px; display:flex; align-items:center; justify-content:center; padding-left:5px; box-shadow:0 6px 22px rgba(0,0,0,.55); }
 .exv-capa-txt{ position:absolute; left:12px; bottom:10px; font-weight:700; font-size:13px; color:#fff; background:rgba(0,0,0,.62); padding:5px 11px; border-radius:14px; }
-.cartoes-exec{ display:grid; gap:8px; margin-bottom:12px; }
+.cartoes-exec{ flex:0 0 100%; min-width:0; display:grid; gap:8px; margin-bottom:4px; }
 .cartao-exec{ padding:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#000; cursor:zoom-in; }
 .cartao-exec img{ width:100%; display:block; }
 .exv-reserva{ margin:-6px 0 10px; text-align:right; font-size:12px; }
@@ -373,7 +373,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 .abas{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; gap:4px; margin-bottom:10px; }
 .abas button{ min-height:40px; border-radius:10px; font-weight:700; font-size:13px; color:var(--muted); }
 .abas button[aria-selected="true"]{ background:var(--orange); color:#1A0E05; }
-.exv-conteudo{ display:flex; gap:10px; align-items:flex-start; }
+.exv-conteudo{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; }
 .passos{ flex:1; min-width:0; margin:0; padding:0; list-style:none; counter-reset:p; }
 .passos li{ counter-increment:p; display:flex; gap:10px; margin:0 0 10px; font-size:14px; line-height:1.45; }
 .passos li:last-child{ margin-bottom:0; }
@@ -455,7 +455,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.7';
+const VERSAO_APP = '4.8';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -1289,15 +1289,14 @@ const CONTEUDO_EX = {
 };
 
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
-/* fotos curadas dos exercícios: arquivos de texto fotos-ex-1.js a fotos-ex-7.js no repositório oficial (o teste usa os mesmos, pelo mesmo domínio) */
-const BASE_FOTOS_EX = '/meu-treino/', QTD_FOTOS_EX = 7;
-const CARTOES_EXEC = { remada_baixa: 1, extensora: 1, adutora: 1, triceps_frances: 2, panturrilha: 1, gluteo_maquina: 1, rosca_maquina: 1, rosca_scott: 1, supino_maquina: 1 };
+/* fotos curadas dos exercícios: arquivos de texto fotos-ex-1.js a fotos-ex-4.js no repositório oficial (o teste usa os mesmos, pelo mesmo domínio) */
+const BASE_FOTOS_EX = '/meu-treino/', QTD_FOTOS_EX = 4, VERSAO_FOTOS_EX = '1';
 const fotosEx = () => window.FOTOS_EX || {};
 const urlFotoEx = id => fotosEx()[id] || (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null;
 function carregarFotosEx() {
   let faltam = QTD_FOTOS_EX;
   for (let n = 1; n <= QTD_FOTOS_EX; n++) {
-    const sc = document.createElement('script'); sc.async = true; sc.src = `${BASE_FOTOS_EX}fotos-ex-${n}.js?v=${VERSAO_APP}`;
+    const sc = document.createElement('script'); sc.async = true; sc.src = `${BASE_FOTOS_EX}fotos-ex-${n}.js?v=${VERSAO_FOTOS_EX}`;
     sc.onload = sc.onerror = () => { if (--faltam === 0 && S.page === 'session' && !document.querySelector('.exv-midia iframe') && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); };
     document.head.appendChild(sc);
   }
@@ -1344,6 +1343,50 @@ const VIDEOS_PADRAO = {
   panturrilha_sentado: 'VMF0WZZ_BTU', pallof: 'uUcHRhMvTTo', gluteo_maquina: 'iQAHZjXkNi8', elevacao_lateral_halter: 'gURBTU9VSJg',
   rosca_direta: 'CBL8S3q9e60', rosca_inversa: 'qGy5g0z3sOs'
 };
+/* alternativas do Book: usadas automaticamente quando o vídeo principal não pode tocar dentro do app */
+const VIDEOS_ALT = {
+  puxada_neutra: '4nKSS0bS-_A', crucifixo: '04ZynYimGZk', remada_baixa: 'zNPcKFqLFd4', elevacao_lateral_maquina: '7KmaeJ4z66s',
+  triceps_corda: 'TLnIVtuuoYw', rosca_maquina: 'SMg4mUOplwA', crucifixo_invertido: '5-HhI9yCuUo', rosca_scott: 'TTvOm65EKnA',
+  leg_press: 'itJDw9I1qu4', mesa_flexora: 'wUobhTUtvn4', extensora: 'WKqCZh9hdCc', abdutora: 'fY25005DmLs', panturrilha: 'F7_8z_7Kwks',
+  abdominal: 'rSlTGve9n0Y', elevacao_lateral: 'KNLUNdV9pvg', supino_maquina: 'e-F32H5SF6E', remada_aberta: 'NHoOrhLr9mc',
+  leg_press_alto: 'QcfUX2f0LIU', flexora: 'ZsNgFL4cfMM', extensao_lombar: 'kLcjscPyLqI', adutora: 'FvWoJW4qZQ0',
+  panturrilha_sentado: 'N_bpzfkp0mg', pallof: '91zJZhRx2u0', elevacao_lateral_halter: 'rOwmwow9DMM', rosca_direta: 'ghl0bfn-hA0', rosca_inversa: 'Ys_Iy4ajKps'
+};
+let apiYT = null;
+function carregarApiYT() {
+  if (apiYT) return apiYT;
+  apiYT = new Promise(res => {
+    if (window.YT && window.YT.Player) { res(window.YT); return; }
+    const ant = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (typeof ant === 'function') ant(); res(window.YT); };
+    const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.async = true;
+    sc.onerror = () => { apiYT = null; res(null); };
+    document.head.appendChild(sc);
+  });
+  return apiYT;
+}
+const srcVideo = vid => `${perfil().ytPremium ? 'https://www.youtube.com' : 'https://www.youtube-nocookie.com'}/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
+function tocarVideo(box, exId, titulo) {
+  const fila = [videoDe(exId), midia().videos[exId] ? null : VIDEOS_ALT[exId]].filter((v, i, a) => v && a.indexOf(v) === i);
+  const reserva = box.nextElementSibling && box.nextElementSibling.querySelector('a');
+  const montar = i => {
+    box.classList.remove('vazio');
+    box.innerHTML = `<iframe src="${srcVideo(fila[i])}" title="${esc(titulo)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    if (reserva) reserva.href = 'https://www.youtube.com/watch?v=' + fila[i];
+    carregarApiYT().then(YT => {
+      const fr = box.querySelector('iframe'); if (!YT || !fr) return;
+      try {
+        new YT.Player(fr, { events: { onError: () => {
+          if (!box.isConnected || box.querySelector('iframe') !== fr) return;
+          if (i + 1 < fila.length) { montar(i + 1); return; }
+          box.classList.add('vazio');
+          box.innerHTML = `${ICO.haltere}<span>Este vídeo não abre dentro do app</span><a class="btn ghost small" href="https://www.youtube.com/watch?v=${fila[0]}" target="_blank" rel="noopener">▶ Abrir no YouTube</a>`;
+        } } });
+      } catch (err) { /* sem a API do YouTube, o vídeo toca normalmente, só sem a troca automática */ }
+    });
+  };
+  montar(0);
+}
 const idYoutube = url => { const m = String(url || '').match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : null; };
 /* o link fixado pela pessoa tem prioridade: se não for do YouTube, não toca dentro do app e o botão abre o link dela */
 const videoDe = id => { const fix = midia().videos[id]; return fix ? idYoutube(fix) : (VIDEOS_PADRAO[id] || null); };
@@ -1411,6 +1454,10 @@ const ICO = {
   seta: '<svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 };
 const ICON_CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+function fotoCurada(id) {
+  const u = urlFotoEx(id);
+  return u ? `<div class="foto tem" aria-hidden="true"><img src="${esc(u)}" alt="" loading="lazy" data-esconde></div>` : '';
+}
 function fotoEx(id) {
   const f = midia().fotos[id];
   if (f && srcFoto(f)) return `<button class="foto tem" data-a="foto-ver" data-ex-id="${id}" aria-label="Ver foto do aparelho"><img src="${esc(srcFoto(f))}" alt="Foto do aparelho: ${esc(nomeEx(id))}" loading="lazy"></button>`;
@@ -1459,7 +1506,7 @@ function cardEx(id) {
   const s = S.atual, d = EX[id] || { nome: nomeEx(id), equip: '', g: [], dica: '' }, e = s.ex[id], p = e.p || prescricao(id, s.treino);
   const hist = historicoEx(id), ult = hist[hist.length - 1], feitos = okSets(e).length, done = feitos === e.sets.length && e.sets.length > 0, orig = textoOrigem(e);
   let h = `<div class="exercise ${done ? 'done' : ''}" data-ex="${id}">
-    <div class="ex-topo">${fotoEx(id)}<div class="ex-info">
+    <div class="ex-topo">${fotoCurada(id)}<div class="ex-info">
       <div class="ex-cab"><div class="exercise-title">${esc(d.nome)}</div><span class="ex-cont" data-cont>${feitos}/${e.sets.length}</span></div>
       <div class="exercise-meta" style="margin-bottom:0">${p.series} séries · ${p.min}–${p.max} reps · descanso ${mmss(p.rest)}<br>${esc(d.g.join(', '))}${d.equip ? ' · ' + esc(d.equip.toLowerCase()) : ''}</div>
       <div class="row" style="gap:6px">${videoDe(id) ? `<button class="btn-video" data-a="video" data-ex-id="${id}">▶ Vídeo</button>` : `<a class="btn-video" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Ver vídeo</a>`}<button class="btn-video" data-a="trocar" aria-label="Trocar ${esc(d.nome)} por outro exercício">⇄ Trocar</button></div>${e.orig ? `<div class="smalltxt" style="margin-top:4px">No lugar de: ${esc(nomeEx(e.orig))}</div>` : ''}</div></div>
@@ -1512,7 +1559,8 @@ function irProximoEx(id) {
 }
 function midiaEx(id) {
   const vid = videoDe(id), nome = esc(nomeEx(id)), foto = urlFotoEx(id);
-  if (vid) return `<div class="exv-midia"><button class="exv-capa" data-a="tocar-video" data-vid="${esc(vid)}" aria-label="Tocar o vídeo de execução: ${nome}"><img src="${esc(foto || capaYoutube(vid))}" alt="Execução: ${nome}" ${foto ? `data-reserva="${esc(capaYoutube(vid))}"` : ''}><span class="exv-play" aria-hidden="true">▶</span><span class="exv-capa-txt">Ver vídeo</span></button></div><div class="exv-reserva"><a href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">Vídeo não abriu? Abrir no YouTube</a></div>`;
+  if (vid && typeof document !== 'undefined') carregarApiYT();
+  if (vid) return `<div class="exv-midia"><button class="exv-capa" data-a="tocar-video" data-capa-ex="${id}" data-vid="${esc(vid)}" aria-label="Tocar o vídeo de execução: ${nome}"><img src="${esc(foto || capaYoutube(vid))}" alt="Execução: ${nome}" ${foto ? `data-reserva="${esc(capaYoutube(vid))}"` : ''}><span class="exv-play" aria-hidden="true">▶</span><span class="exv-capa-txt">Ver vídeo</span></button></div><div class="exv-reserva"><a href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">Vídeo não abriu? Abrir no YouTube</a></div>`;
   if (foto) return `<div class="exv-midia"><img src="${esc(foto)}" alt="Execução: ${nome}" data-esconde><a class="exv-yt" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Vídeos no YouTube</a></div>`;
   return `<div class="exv-midia vazio">${ICO.haltere}<span>Vídeo deste exercício em breve</span><a class="btn ghost small" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Ver vídeos no YouTube</a></div>`;
 }
@@ -1520,10 +1568,7 @@ function conteudoAba(id, aba) {
   const d = EX[id] || { g: [], gi: [], dica: '' }, C = CONTEUDO_EX[id] || {};
   const itens = aba === 'musc' ? [`Principal: ${d.g.join(', ')}.`, (d.gi || []).length ? `Auxiliares: ${d.gi.join(', ')}.` : null, d.equip ? `Equipamento: ${d.equip.toLowerCase()}.` : null].filter(Boolean)
     : aba === 'dicas' ? (C.dicas || [d.dica]) : aba === 'erros' ? (C.erros || ['Use carga que permita manter a técnica do começo ao fim.']) : (C.passos || [d.dica]);
-  const nc = !['musc', 'dicas', 'erros'].includes(aba) ? (CARTOES_EXEC[id] || 0) : 0;
-  const fontes = Array.from({ length: nc }, (_, i) => fotosEx()[id + (i ? '-' + (i + 1) : '') + '-execucao']).filter(Boolean);
-  const cartoes = fontes.length ? `<div class="cartoes-exec">${fontes.map((src, i) => { return `<button class="cartao-exec" data-a="ver-cartao" data-i="${i}" data-id="${id}" aria-label="Ampliar início e final${fontes.length > 1 ? ' ' + (i + 1) : ''}"><img src="${src}" alt="Início e final do movimento: ${esc(d.nome || nomeEx(id))}" data-sumir=".cartao-exec"></button>`; }).join('')}</div>` : '';
-  return `${cartoes}<ol class="passos">${itens.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${mapaCorpo(id)}`;
+  return `<ol class="passos">${itens.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${mapaCorpo(id)}`;
 }
 function vExercicio(id) {
   const s = S.atual, d = EX[id] || { nome: nomeEx(id), equip: '', g: [], gi: [] }, e = s.ex[id], p = e.p || prescricao(id, s.treino);
@@ -1536,7 +1581,7 @@ function vExercicio(id) {
   };
   const abas = [['exec', 'Execução'], ['musc', 'Músculos'], ['dicas', 'Dicas'], ['erros', 'Erros']];
   return `<div class="exv-cab"><div style="min-width:0"><div class="exv-nome">${esc(d.nome)}</div><div class="smalltxt" style="margin:4px 0 0">Exercício ${idx + 1} de ${n} · <span class="reg">${esc(d.g.join(', '))}</span>${d.equip ? ' · ' + esc(d.equip.toLowerCase()) : ''}</div>${e.orig ? `<div class="smalltxt" style="margin:2px 0 0">No lugar de: ${esc(nomeEx(e.orig))}</div>` : ''}</div>
-      <div class="exv-acoes">${fotoEx(id)}<button class="btn ghost small" data-a="trocar" data-ex-id="${id}" aria-label="Trocar ${esc(d.nome)} por outro exercício">⇄ Trocar</button></div></div>
+      <div class="exv-acoes"><button class="btn ghost small" data-a="trocar" data-ex-id="${id}" aria-label="Trocar ${esc(d.nome)} por outro exercício">⇄ Trocar</button></div></div>
     ${midiaEx(id)}
     <div class="abas" role="tablist" aria-label="Como fazer">${abas.map(([k, t]) => `<button role="tab" aria-selected="${aba === k}" data-a="aba-ex" data-aba="${k}">${t}</button>`).join('')}</div>
     <div class="card" style="margin:0"><div class="exv-conteudo" id="exv-conteudo">${conteudoAba(id, aba)}</div><p class="nota-orient">Orientação geral. Em caso de dor, pare e fale com seu profissional.</p></div>
@@ -1780,7 +1825,7 @@ function vLibrary() {
   h += ids.map(id => {
     const d = EX[id], ts = usados[id] || [];
     return `<div class="card bib" data-busca="${esc(chave(id))}" ${q && !chave(id).includes(q) ? 'hidden' : ''}>
-      <div class="ex-topo">${fotoEx(id)}<div class="ex-info"><strong>${esc(d.nome)}</strong>
+      <div class="ex-topo">${fotoCurada(id)}<div class="ex-info"><strong>${esc(d.nome)}</strong>
       <div class="row" style="gap:6px;margin:6px 0">${ts.map(t => `<span class="pill">Treino ${t}</span>`).join('')}${ts.length ? '' : '<span class="pill" style="opacity:.7">Fora da ficha atual</span>'}</div>
       ${videoDe(id) ? `<button class="btn-video" style="margin-top:0" data-a="video" data-ex-id="${id}">▶ Ver vídeo aqui</button>` : `<a class="btn-video" style="margin-top:0" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Ver vídeos curtos</a>`}</div></div>
       <div class="smalltxt">${esc(d.g.join(', '))} · ${esc(d.equip)} · ${d.series} × ${d.min}–${d.max} reps · descanso ${mmss(d.rest)}${(d.gi || []).length ? ` · também trabalha ${esc(d.gi.join(', ').toLowerCase())}` : ''}</div>
@@ -2078,6 +2123,7 @@ function vProfile() {
       <p class="smalltxt" id="status" style="margin-top:6px">${esc(statusTexto())}</p>
       <p class="smalltxt">Versão do app ${VERSAO_APP}${AMBIENTE === 'teste' ? ' · ambiente de teste' : ''}.</p>
       ${S.trocarSenha ? `<form data-form="trocar-senha" class="fields" style="margin-top:10px"><div class="field"><label for="t-senha">Nova senha (mín. 8)</label><input id="t-senha" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="t-senha2">Repita a senha</label><input id="t-senha2" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn small larga field" type="submit">Salvar nova senha</button></form>` : ''}
+      <div class="cad-sec" style="margin-top:14px"><span class="rot">Vídeos dos exercícios</span><div class="chips"><button class="chip" data-a="yt-premium" aria-pressed="${!!perfil().ytPremium}">${perfil().ytPremium ? '✓ ' : ''}Tenho YouTube Premium</button></div><p class="smalltxt" style="margin:6px 0 0">Ligado, os vídeos usam a sua conta do YouTube aberta neste navegador e tocam sem anúncios.</p></div>
       <div class="row" style="margin-top:10px"><button class="btn secondary small" data-a="trocar-senha">${S.trocarSenha ? 'Cancelar' : 'Trocar senha'}</button><button class="btn secondary small" data-a="auth-sair">Sair da conta</button>${dadosLegados() && LS.get('mt_migracao', null) === 'recusada' ? `<button class="btn secondary small" data-a="migrar">Enviar dados antigos deste celular</button>` : ''}</div></div>
     <div class="card"><h3>${esc(p.nome || 'Seu perfil')}</h3><p class="smalltxt">Objetivo: ${esc(p.objetivo || 'não definido')}. Programa: ${esc(prog().nome)}.</p>
       ${p.altura ? `<div class="linha-info"><span class="muted">Altura</span><strong>${numBR(p.altura)} m</strong></div>` : ''}
@@ -2317,8 +2363,8 @@ async function tratarClique(ev) {
     }
     case 'voltar': voltar(); break;
     case 'menu-conta': menuConta(); break;
-    case 'tocar-video': { const box = b.parentElement, vid = b.dataset.vid; box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0&modestbranding=1" title="${esc(b.getAttribute('aria-label') || 'Vídeo de execução')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; break; }
-    case 'ver-cartao': modal(`<img src="${b.querySelector('img').getAttribute('src')}" alt="Início e final do movimento" style="width:100%;border-radius:12px;display:block">`, [['Fechar', '0', 'secondary']]); break;
+    case 'yt-premium': { const p = Object.assign({}, perfil(), { ytPremium: !perfil().ytPremium }); gravarDoc(p); render(); toast(p.ytPremium ? 'Vídeos pela sua conta do YouTube Premium' : 'Vídeos no modo padrão'); break; }
+    case 'tocar-video': { const box = b.parentElement, ex = b.dataset.capaEx; tocarVideo(box, ex, b.getAttribute('aria-label') || 'Vídeo de execução'); break; }
     case 'auth-google': { if (!sb) return; const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlApp() } }); if (error) { S.auth.erro = msgAuth(error); render(); } break; }
     case 'cad-passo': { S.cad.passo = Math.max(1, Math.min(3, +b.dataset.p)); render(); window.scrollTo(0, 0); break; }
     case 'cad-op': {
