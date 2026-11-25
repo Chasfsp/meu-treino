@@ -1289,11 +1289,19 @@ const CONTEUDO_EX = {
 };
 
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
-/* fotos curadas dos exercícios: arquivos na pasta img/exercicios do repositório oficial (mesmo domínio do teste) */
-const IMG_EX = '/meu-treino/img/exercicios/';
-const FOTO_PRINCIPAL = new Set(['abdominal', 'leg_press', 'abdutora', 'adutora', 'crucifixo', 'crucifixo_invertido', 'elevacao_lateral', 'elevacao_lateral_maquina', 'extensao_lombar', 'extensora', 'flexora', 'gluteo_maquina', 'leg_press_alto', 'mesa_flexora', 'pallof', 'panturrilha', 'panturrilha_sentado', 'puxada_neutra', 'remada_aberta', 'remada_baixa', 'rosca_maquina', 'rosca_scott', 'supino_inclinado', 'supino_maquina', 'triceps_corda', 'triceps_frances']);
+/* fotos curadas dos exercícios: arquivos de texto fotos-ex-1.js a fotos-ex-7.js no repositório oficial (o teste usa os mesmos, pelo mesmo domínio) */
+const BASE_FOTOS_EX = '/meu-treino/', QTD_FOTOS_EX = 7;
 const CARTOES_EXEC = { remada_baixa: 1, extensora: 1, adutora: 1, triceps_frances: 2, panturrilha: 1, gluteo_maquina: 1, rosca_maquina: 1, rosca_scott: 1, supino_maquina: 1 };
-const urlFotoEx = id => (FOTO_PRINCIPAL.has(id) ? IMG_EX + id + '.jpg' : (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null);
+const fotosEx = () => window.FOTOS_EX || {};
+const urlFotoEx = id => fotosEx()[id] || (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null;
+function carregarFotosEx() {
+  let faltam = QTD_FOTOS_EX;
+  for (let n = 1; n <= QTD_FOTOS_EX; n++) {
+    const sc = document.createElement('script'); sc.async = true; sc.src = `${BASE_FOTOS_EX}fotos-ex-${n}.js?v=${VERSAO_APP}`;
+    sc.onload = sc.onerror = () => { if (--faltam === 0 && S.page === 'session' && !document.querySelector('.exv-midia iframe') && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); };
+    document.head.appendChild(sc);
+  }
+}
 const capaYoutube = vid => `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
 /* figuras anatômicas (careca, proporção atlética sem exagero): silhueta contínua + músculos com contorno; metade esquerda espelhada */
 const FIG = {
@@ -1364,6 +1372,7 @@ function avisos() {
   if (!m || agora - ms(m.data) > 30 * 864e5) l.push({ t: 'Nova medição', d: m ? `Última medição em ${dataISO(m.data)}. Registre peso e medidas na Evolução.` : 'Registre seu peso e suas medidas na Evolução.', acao: 'go:progress' });
   return l;
 }
+carregarFotosEx();
 document.addEventListener('error', ev => {
   const im = ev.target; if (!im || im.tagName !== 'IMG') return;
   if (im.dataset.reserva) { const r = im.dataset.reserva; delete im.dataset.reserva; im.src = r; return; }
@@ -1512,7 +1521,8 @@ function conteudoAba(id, aba) {
   const itens = aba === 'musc' ? [`Principal: ${d.g.join(', ')}.`, (d.gi || []).length ? `Auxiliares: ${d.gi.join(', ')}.` : null, d.equip ? `Equipamento: ${d.equip.toLowerCase()}.` : null].filter(Boolean)
     : aba === 'dicas' ? (C.dicas || [d.dica]) : aba === 'erros' ? (C.erros || ['Use carga que permita manter a técnica do começo ao fim.']) : (C.passos || [d.dica]);
   const nc = !['musc', 'dicas', 'erros'].includes(aba) ? (CARTOES_EXEC[id] || 0) : 0;
-  const cartoes = nc ? `<div class="cartoes-exec">${Array.from({ length: nc }, (_, i) => { const src = IMG_EX + id + (i ? '-' + (i + 1) : '') + '-execucao.jpg'; return `<button class="cartao-exec" data-a="ver-cartao" data-src="${src}" aria-label="Ampliar início e final${nc > 1 ? ' ' + (i + 1) : ''}"><img src="${src}" alt="Início e final do movimento: ${esc(d.nome || nomeEx(id))}" loading="lazy" data-sumir=".cartao-exec"></button>`; }).join('')}</div>` : '';
+  const fontes = Array.from({ length: nc }, (_, i) => fotosEx()[id + (i ? '-' + (i + 1) : '') + '-execucao']).filter(Boolean);
+  const cartoes = fontes.length ? `<div class="cartoes-exec">${fontes.map((src, i) => { return `<button class="cartao-exec" data-a="ver-cartao" data-i="${i}" data-id="${id}" aria-label="Ampliar início e final${fontes.length > 1 ? ' ' + (i + 1) : ''}"><img src="${src}" alt="Início e final do movimento: ${esc(d.nome || nomeEx(id))}" data-sumir=".cartao-exec"></button>`; }).join('')}</div>` : '';
   return `${cartoes}<ol class="passos">${itens.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${mapaCorpo(id)}`;
 }
 function vExercicio(id) {
@@ -2308,7 +2318,7 @@ async function tratarClique(ev) {
     case 'voltar': voltar(); break;
     case 'menu-conta': menuConta(); break;
     case 'tocar-video': { const box = b.parentElement, vid = b.dataset.vid; box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0&modestbranding=1" title="${esc(b.getAttribute('aria-label') || 'Vídeo de execução')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; break; }
-    case 'ver-cartao': modal(`<img src="${esc(b.dataset.src)}" alt="Início e final do movimento" style="width:100%;border-radius:12px;display:block">`, [['Fechar', '0', 'secondary']]); break;
+    case 'ver-cartao': modal(`<img src="${b.querySelector('img').getAttribute('src')}" alt="Início e final do movimento" style="width:100%;border-radius:12px;display:block">`, [['Fechar', '0', 'secondary']]); break;
     case 'auth-google': { if (!sb) return; const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlApp() } }); if (error) { S.auth.erro = msgAuth(error); render(); } break; }
     case 'cad-passo': { S.cad.passo = Math.max(1, Math.min(3, +b.dataset.p)); render(); window.scrollTo(0, 0); break; }
     case 'cad-op': {
