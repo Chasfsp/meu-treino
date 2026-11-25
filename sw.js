@@ -1,5 +1,5 @@
 /* Meu Treino: funciona sem internet e busca atualizações quando há conexão */
-const VERSAO = '4.6';
+const VERSAO = '4.7';
 /* oficial e teste ficam no mesmo domínio: cada um usa e limpa só a própria cópia */
 const AMB = self.registration.scope.includes('/meu-treino-teste/') ? 'teste' : 'oficial';
 const CACHE = `meu-treino-${AMB}-${VERSAO}`;
@@ -16,7 +16,10 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin === location.origin) {
+  if (url.origin === location.origin && url.pathname.includes('/img/')) {
+    /* fotos dos exercícios: a cópia guardada primeiro; na primeira vez, da rede */
+    e.respondWith(caches.match(req).then(r => r || fetch(req).then(resp => { if (resp.ok) { const copia = resp.clone(); caches.open(CACHE).then(c => c.put(req, copia)); } return resp; })));
+  } else if (url.origin === location.origin) {
     /* o app: rede primeiro, para pegar atualizações; sem internet, a cópia guardada */
     e.respondWith(fetch(req).then(r => { const copia = r.clone(); caches.open(CACHE).then(c => c.put(req, copia)); return r; })
       .catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('./index.html'))));
