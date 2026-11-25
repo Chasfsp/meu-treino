@@ -16,7 +16,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin === location.origin && url.pathname.includes('/img/')) {
+  if (url.origin === location.origin && (url.pathname.includes('/img/') || /\/fotos-ex-\d+\.js$/.test(url.pathname))) {
     /* fotos dos exercícios: a cópia guardada primeiro; na primeira vez, da rede */
     e.respondWith(caches.match(req).then(r => r || fetch(req).then(resp => { if (resp.ok) { const copia = resp.clone(); caches.open(CACHE).then(c => c.put(req, copia)); } return resp; })));
   } else if (url.origin === location.origin) {
