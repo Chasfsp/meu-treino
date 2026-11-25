@@ -361,6 +361,13 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 .exv-midia iframe,.exv-midia img{ position:absolute; inset:0; width:100%; height:100%; border:0; object-fit:cover; }
 .exv-midia.vazio{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); background:#121212; font-size:13px; }
 .exv-midia.vazio svg{ width:44px; height:44px; stroke:var(--orange); fill:none; stroke-width:2; stroke-linecap:round; }
+.exv-capa{ position:relative; display:block; width:100%; height:100%; padding:0; border:0; background:#000; cursor:pointer; }
+.exv-capa img{ width:100%; height:100%; object-fit:cover; display:block; }
+.exv-play{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:64px; height:64px; border-radius:50%; background:rgba(255,106,0,.94); color:#1A0E05; font-size:24px; display:flex; align-items:center; justify-content:center; padding-left:5px; box-shadow:0 6px 22px rgba(0,0,0,.55); }
+.exv-capa-txt{ position:absolute; left:12px; bottom:10px; font-weight:700; font-size:13px; color:#fff; background:rgba(0,0,0,.62); padding:5px 11px; border-radius:14px; }
+.cartoes-exec{ display:grid; gap:8px; margin-bottom:12px; }
+.cartao-exec{ padding:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#000; cursor:zoom-in; }
+.cartao-exec img{ width:100%; display:block; }
 .exv-reserva{ margin:-6px 0 10px; text-align:right; font-size:12px; }
 .exv-yt{ position:absolute; right:10px; bottom:10px; background:rgba(11,11,11,.8); border:1px solid #3A3A3A; color:#FFFFFF; border-radius:10px; padding:8px 10px; font-size:12px; font-weight:700; }
 .abas{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; gap:4px; margin-bottom:10px; }
@@ -448,7 +455,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.6';
+const VERSAO_APP = '4.7';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -1282,6 +1289,12 @@ const CONTEUDO_EX = {
 };
 
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
+/* fotos curadas dos exercícios: arquivos na pasta img/exercicios do repositório oficial (mesmo domínio do teste) */
+const IMG_EX = '/meu-treino/img/exercicios/';
+const FOTO_PRINCIPAL = new Set(['abdominal', 'leg_press', 'abdutora', 'adutora', 'crucifixo', 'crucifixo_invertido', 'elevacao_lateral', 'elevacao_lateral_maquina', 'extensao_lombar', 'extensora', 'flexora', 'gluteo_maquina', 'leg_press_alto', 'mesa_flexora', 'pallof', 'panturrilha', 'panturrilha_sentado', 'puxada_neutra', 'remada_aberta', 'remada_baixa', 'rosca_maquina', 'rosca_scott', 'supino_inclinado', 'supino_maquina', 'triceps_corda', 'triceps_frances']);
+const CARTOES_EXEC = { remada_baixa: 1, extensora: 1, adutora: 1, triceps_frances: 2, panturrilha: 1, gluteo_maquina: 1, rosca_maquina: 1, rosca_scott: 1, supino_maquina: 1 };
+const urlFotoEx = id => (FOTO_PRINCIPAL.has(id) ? IMG_EX + id + '.jpg' : (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null);
+const capaYoutube = vid => `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`;
 /* figuras anatômicas (careca, proporção atlética sem exagero): silhueta contínua + músculos com contorno; metade esquerda espelhada */
 const FIG = {
   M: {
@@ -1316,10 +1329,16 @@ function mapaCorpo(id) {
 const VIDEOS_PADRAO = {
   supino_inclinado: 'bZtXNt7gbPY', puxada_neutra: '76zk3CD2JJQ', crucifixo: '0yDRsJ19OF4', remada_baixa: '7_6CSFfIHfk',
   elevacao_lateral_maquina: '8GvYpmAL4zA', triceps_corda: 'M-DTY40JG9M', rosca_maquina: 'KpHxwE4jjcs',
-  crucifixo_invertido: '_7ZJJy3Z99k', triceps_frances: 'lkEoFfNyzkk', rosca_scott: 'JWRoHF7I2NQ', triceps_testa: 'LOCarvWMhNQ'
+  crucifixo_invertido: '_7ZJJy3Z99k', triceps_frances: 'lkEoFfNyzkk', rosca_scott: 'JWRoHF7I2NQ', triceps_testa: 'LOCarvWMhNQ',
+  leg_press: 'FeZ8D00iK5E', mesa_flexora: 'sWSm1pWb3lw', extensora: 'mruTNzILY3U', abdutora: 'tmhQjzgSPRg', panturrilha: 'Ua7jx6wKyMw',
+  abdominal: 'pR7WtwTOOTw', elevacao_lateral: 'ze9B6VX4nUs', supino_maquina: 'LPk4vsVWGoM', remada_aberta: 'xpkNxVSN2ec',
+  leg_press_alto: 'Vnb-oj9pB84', flexora: '_TDeIBSoKzk', extensao_lombar: 'hfFVbXJ5UvQ', adutora: 'JSdgUsiublY',
+  panturrilha_sentado: 'VMF0WZZ_BTU', pallof: 'uUcHRhMvTTo', gluteo_maquina: 'iQAHZjXkNi8', elevacao_lateral_halter: 'gURBTU9VSJg',
+  rosca_direta: 'CBL8S3q9e60', rosca_inversa: 'qGy5g0z3sOs'
 };
 const idYoutube = url => { const m = String(url || '').match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : null; };
-const videoDe = id => idYoutube(midia().videos[id]) || VIDEOS_PADRAO[id] || null;
+/* o link fixado pela pessoa tem prioridade: se não for do YouTube, não toca dentro do app e o botão abre o link dela */
+const videoDe = id => { const fix = midia().videos[id]; return fix ? idYoutube(fix) : (VIDEOS_PADRAO[id] || null); };
 function abrirVideo(exId) {
   const vid = videoDe(exId); if (!vid) return;
   fecharVideo();
@@ -1345,6 +1364,12 @@ function avisos() {
   if (!m || agora - ms(m.data) > 30 * 864e5) l.push({ t: 'Nova medição', d: m ? `Última medição em ${dataISO(m.data)}. Registre peso e medidas na Evolução.` : 'Registre seu peso e suas medidas na Evolução.', acao: 'go:progress' });
   return l;
 }
+document.addEventListener('error', ev => {
+  const im = ev.target; if (!im || im.tagName !== 'IMG') return;
+  if (im.dataset.reserva) { const r = im.dataset.reserva; delete im.dataset.reserva; im.src = r; return; }
+  if (im.dataset.sumir) { const c = im.closest(im.dataset.sumir); if (c) c.remove(); return; }
+  if (im.hasAttribute('data-esconde')) { const sp = document.createElement('span'); sp.className = im.className; sp.setAttribute('aria-hidden', 'true'); sp.innerHTML = ICON_CAM; im.replaceWith(sp); }
+}, true);
 async function menuConta() {
   const r = await modal(`<h3 style="margin:0">${esc(perfil().nome || nomeConta() || 'Sua conta')}</h3><p class="smalltxt" style="margin:2px 0 4px">${esc(S.auth.email || '')}</p>
     <div style="text-align:left"><button class="aviso-item" data-r="perfil"><strong>Meu perfil</strong><small>Dados, medidas e configurações</small></button><button class="aviso-item" data-r="trocar"><strong>Trocar de usuário</strong><small>Sair e entrar com outra conta</small></button><button class="aviso-item" data-r="sair"><strong>Sair</strong><small>Encerrar a sessão neste aparelho</small></button></div>`, [['Fechar', '0', 'secondary']]);
@@ -1477,17 +1502,18 @@ function irProximoEx(id) {
   rolarPara('#cardio-card');
 }
 function midiaEx(id) {
-  const vid = videoDe(id), nome = esc(nomeEx(id));
-  if (vid) return `<div class="exv-midia"><iframe src="https://www.youtube-nocookie.com/embed/${vid}?playsinline=1&rel=0&modestbranding=1" title="Vídeo de execução: ${nome}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div><div class="exv-reserva"><a href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">Vídeo não abriu? Abrir no YouTube</a></div>`;
-  const k = FOTO_EX[id];
-  if (k && FOTOS[k]) return `<div class="exv-midia"><img src="${FOTOS[k]}" alt="Execução: ${nome}"><a class="exv-yt" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Vídeos no YouTube</a></div>`;
+  const vid = videoDe(id), nome = esc(nomeEx(id)), foto = urlFotoEx(id);
+  if (vid) return `<div class="exv-midia"><button class="exv-capa" data-a="tocar-video" data-vid="${esc(vid)}" aria-label="Tocar o vídeo de execução: ${nome}"><img src="${esc(foto || capaYoutube(vid))}" alt="Execução: ${nome}" ${foto ? `data-reserva="${esc(capaYoutube(vid))}"` : ''}><span class="exv-play" aria-hidden="true">▶</span><span class="exv-capa-txt">Ver vídeo</span></button></div><div class="exv-reserva"><a href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">Vídeo não abriu? Abrir no YouTube</a></div>`;
+  if (foto) return `<div class="exv-midia"><img src="${esc(foto)}" alt="Execução: ${nome}" data-esconde><a class="exv-yt" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Vídeos no YouTube</a></div>`;
   return `<div class="exv-midia vazio">${ICO.haltere}<span>Vídeo deste exercício em breve</span><a class="btn ghost small" href="${esc(linkVideo(id))}" target="_blank" rel="noopener">▶ Ver vídeos no YouTube</a></div>`;
 }
 function conteudoAba(id, aba) {
   const d = EX[id] || { g: [], gi: [], dica: '' }, C = CONTEUDO_EX[id] || {};
   const itens = aba === 'musc' ? [`Principal: ${d.g.join(', ')}.`, (d.gi || []).length ? `Auxiliares: ${d.gi.join(', ')}.` : null, d.equip ? `Equipamento: ${d.equip.toLowerCase()}.` : null].filter(Boolean)
     : aba === 'dicas' ? (C.dicas || [d.dica]) : aba === 'erros' ? (C.erros || ['Use carga que permita manter a técnica do começo ao fim.']) : (C.passos || [d.dica]);
-  return `<ol class="passos">${itens.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${mapaCorpo(id)}`;
+  const nc = !['musc', 'dicas', 'erros'].includes(aba) ? (CARTOES_EXEC[id] || 0) : 0;
+  const cartoes = nc ? `<div class="cartoes-exec">${Array.from({ length: nc }, (_, i) => { const src = IMG_EX + id + (i ? '-' + (i + 1) : '') + '-execucao.jpg'; return `<button class="cartao-exec" data-a="ver-cartao" data-src="${src}" aria-label="Ampliar início e final${nc > 1 ? ' ' + (i + 1) : ''}"><img src="${src}" alt="Início e final do movimento: ${esc(d.nome || nomeEx(id))}" loading="lazy" data-sumir=".cartao-exec"></button>`; }).join('')}</div>` : '';
+  return `${cartoes}<ol class="passos">${itens.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${mapaCorpo(id)}`;
 }
 function vExercicio(id) {
   const s = S.atual, d = EX[id] || { nome: nomeEx(id), equip: '', g: [], gi: [] }, e = s.ex[id], p = e.p || prescricao(id, s.treino);
@@ -1512,8 +1538,8 @@ function vExercicio(id) {
 function linhaExLista(id, i) {
   const s = S.atual, e = s.ex[id]; if (!e) return '';
   const d = EX[id] || { nome: nomeEx(id), g: [] }, p = e.p || prescricao(id, s.treino), f = okSets(e).length, n = e.sets.length;
-  const estado = e.enviado ? 'feito' : f ? 'andamento' : 'pendente', k = FOTO_EX[id];
-  const mini = k && FOTOS[k] ? `<img class="thumb p" src="${FOTOS[k]}" alt="" loading="lazy">` : `<span class="thumb p" aria-hidden="true">${ICON_CAM}</span>`;
+  const estado = e.enviado ? 'feito' : f ? 'andamento' : 'pendente', fu = urlFotoEx(id);
+  const mini = fu ? `<img class="thumb p" src="${esc(fu)}" alt="" loading="lazy" data-esconde>` : `<span class="thumb p" aria-hidden="true">${ICON_CAM}</span>`;
   return `<button class="exl ${estado}" data-a="abrir-ex" data-id="${id}"><span class="exl-n">${i + 1}</span>${mini}<span class="exl-info"><span class="exl-nome">${esc(d.nome)}</span><span class="reg">${esc(d.g.join(', '))}</span><span class="smalltxt" style="margin:0">${p.series} séries · ${p.min}–${p.max} reps</span></span><span class="exl-estado">${e.enviado ? '✓ ' : ''}${f}/${n}</span></button>`;
 }
 function vSession() {
@@ -2281,6 +2307,8 @@ async function tratarClique(ev) {
     }
     case 'voltar': voltar(); break;
     case 'menu-conta': menuConta(); break;
+    case 'tocar-video': { const box = b.parentElement, vid = b.dataset.vid; box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0&modestbranding=1" title="${esc(b.getAttribute('aria-label') || 'Vídeo de execução')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`; break; }
+    case 'ver-cartao': modal(`<img src="${esc(b.dataset.src)}" alt="Início e final do movimento" style="width:100%;border-radius:12px;display:block">`, [['Fechar', '0', 'secondary']]); break;
     case 'auth-google': { if (!sb) return; const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlApp() } }); if (error) { S.auth.erro = msgAuth(error); render(); } break; }
     case 'cad-passo': { S.cad.passo = Math.max(1, Math.min(3, +b.dataset.p)); render(); window.scrollTo(0, 0); break; }
     case 'cad-op': {
