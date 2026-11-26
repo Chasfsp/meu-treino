@@ -459,7 +459,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.11';
+const VERSAO_APP = '4.12';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -1366,13 +1366,14 @@ const CONTEUDO_EX = {
 
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
 /* fotos curadas dos exercícios: arquivos de texto fotos-ex-1.js a fotos-ex-4.js no repositório oficial (o teste usa os mesmos, pelo mesmo domínio) */
-const BASE_FOTOS_EX = '/meu-treino/', QTD_FOTOS_EX = 5, VERSAO_FOTOS_EX = '1';
+/* arquivos de fotos no repositório oficial, pelo nome exato: as partes 5 a 7 antigas (cartões) não são mais usadas; as trocas estão no fotos-ex-15.js e as próximas partes seguem 16, 17... */
+const BASE_FOTOS_EX = '/meu-treino/', ARQS_FOTOS_EX = ['fotos-ex-1.js', 'fotos-ex-2.js', 'fotos-ex-3.js', 'fotos-ex-4.js', 'fotos-ex-15.js'], VERSAO_FOTOS_EX = '1';
 const fotosEx = () => window.FOTOS_EX || {};
 const urlFotoEx = id => fotosEx()[id] || (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null;
 function carregarFotosEx() {
-  let faltam = QTD_FOTOS_EX;
-  for (let n = 1; n <= QTD_FOTOS_EX; n++) {
-    const sc = document.createElement('script'); sc.async = true; sc.src = `${BASE_FOTOS_EX}fotos-ex-${n}.js?v=${VERSAO_FOTOS_EX}`;
+  let faltam = ARQS_FOTOS_EX.length;
+  for (const arq of ARQS_FOTOS_EX) {
+    const sc = document.createElement('script'); sc.async = true; sc.src = `${BASE_FOTOS_EX}${arq}?v=${VERSAO_FOTOS_EX}`;
     sc.onload = sc.onerror = () => { if (--faltam === 0 && S.page === 'session' && !document.querySelector('.exv-midia iframe') && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); };
     document.head.appendChild(sc);
   }
