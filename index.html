@@ -352,12 +352,16 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 .anexo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
 .btn-google{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:52px; border-radius:12px; background:#FFFFFF; color:#1F1F1F; font-weight:700; font-size:15px; border:1px solid #DADCE0; }
 .btn-google svg{ width:20px; height:20px; }
+.btn-digital{ background:var(--orange); border-color:var(--orange); color:#1A0E05; }
+.digitais{ list-style:none; margin:8px 0 0; padding:0; }
+.digitais li{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
 /* ===== tela do exercício (referência: vídeo em destaque em cima) ===== */
 .exv-cab{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
 .exv-nome{ font-family:var(--fd); font-weight:800; font-size:30px; line-height:1.05; }
 .exv-acoes{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .exv-acoes .foto{ width:52px; height:52px; }
 .exv-midia{ position:relative; margin:0 -18px 12px; aspect-ratio:16/9; background:#000; overflow:hidden; }
+.exv-midia.vertical{ aspect-ratio:auto; height:min(70vh, 640px); }
 .exv-midia iframe,.exv-midia img{ position:absolute; inset:0; width:100%; height:100%; border:0; object-fit:cover; }
 .exv-midia.vazio{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); background:#121212; font-size:13px; }
 .exv-midia.vazio svg{ width:44px; height:44px; stroke:var(--orange); fill:none; stroke-width:2; stroke-linecap:round; }
@@ -455,7 +459,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.8';
+const VERSAO_APP = '4.10';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -949,11 +953,21 @@ function msgAuth(err) {
 function criarCliente() {
   if (!SUPA_URL || !SUPA_CHAVE) return null;
   if (!window.supabase || typeof window.supabase.createClient !== 'function') return null;
-  try { return window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); }
+  try { return window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, experimental: { passkey: true } } }); }
   catch (e) { return null; }
 }
+const chaveDigital = () => 'mt_digital@' + AMBIENTE;
+const temWebAuthn = () => typeof window !== 'undefined' && !!window.PublicKeyCredential;
+const podeDigital = () => temWebAuthn() && (S.passkeyAtivo || (() => { try { return localStorage.getItem(chaveDigital()) === '1'; } catch (e) { return false; } })());
+const cancelouDigital = err => /NotAllowed|cancel|abort|timed out|tempo/i.test(String((err && (err.name + ' ' + err.message)) || ''));
+const msgDigital = err => cancelouDigital(err) ? 'Entrada com a digital cancelada.' : /not enabled|disabled|passkey.*not/i.test(String(err && err.message)) ? 'A entrada com a digital ainda não está ligada no servidor.' : msgAuth(err);
+async function carregarDigitais() {
+  if (!sb || !USUARIO) { S.digitais = []; return; }
+  try { const { data, error } = await sb.auth.passkey.list(); S.digitais = error ? [] : (data || []); } catch (e) { S.digitais = []; }
+}
+const btnDigital = (extra = '') => podeDigital() ? `<button class="btn-google btn-digital" ${extra} data-a="auth-digital">${ICO.digital}Entrar com a digital</button>` : '';
 async function verificarGoogle() {
-  try { const r = await fetch(SUPA_URL + '/auth/v1/settings', { headers: { apikey: SUPA_CHAVE } }); const j = await r.json(); S.googleAtivo = !!(j && j.external && j.external.google); if (S.auth.estado === 'fora') render(); } catch (e) { /* sem conexão: o botão do Google só aparece quando o servidor confirma */ }
+  try { const r = await fetch(SUPA_URL + '/auth/v1/settings', { headers: { apikey: SUPA_CHAVE } }); const j = await r.json(); S.googleAtivo = !!(j && j.external && j.external.google); S.passkeyAtivo = !!(j && (j.passkey_enabled || j.passkey === true)); if (S.auth.estado === 'fora') render(); } catch (e) { /* sem conexão: o botão do Google só aparece quando o servidor confirma */ }
 }
 async function iniciarConta() {
   sb = criarCliente();
@@ -1028,7 +1042,7 @@ async function sairDaConta() {
 function sairLocal(msg) {
   ['mt2_docs', 'mt_atual', 'mt_pend', 'mt_apagados'].forEach(k => LS.del(k));
   USUARIO = null; pararTimer(); liberarTela();
-  Object.assign(S, { docs: {}, atual: null, pend: new Set(), apagados: new Set(), consentido: false, page: 'home', trocarSenha: false });
+  Object.assign(S, { docs: {}, atual: null, pend: new Set(), apagados: new Set(), consentido: false, page: 'home', trocarSenha: false, digitais: undefined });
   S.auth = { estado: 'fora', tela: 'entrar', msg: msg || '', erro: '', email: '', user: null, papel: null };
   render();
 }
@@ -1038,7 +1052,7 @@ function vAuth() {
   if (a.estado === 'carregando') return caixa('Carregando…', 'Conferindo a sua conta.', '');
   if (a.tela === 'boasvindas') return `<div class="bv"${FOTOS.atleta ? ` style="background-image:url('${FOTOS.atleta}')"` : ''}><div class="bv-topo"><span class="bv-logo" aria-hidden="true">${ICO.logo}<b>MT</b></span><div class="bv-marca">Meu Treino</div><div class="bv-tag">SEU TREINO, SUA EVOLUÇÃO</div>${seloTeste()}</div>
     <div class="bv-base"><div class="bv-frase"><i aria-hidden="true"></i><p>Organize seus treinos, registre seus resultados e evolua com inteligência.</p></div>${aviso}
-      <button class="btn full cta" data-a="auth-tela" data-t="entrar">Entrar ${ICO.seta}</button>${S.googleAtivo ? `<button class="btn-google" data-a="auth-google">${ICO.google}Continuar com o Google</button>` : ''}<button class="btn full ghost cta" data-a="auth-tela" data-t="criar">Criar conta</button>
+      <button class="btn full cta" data-a="auth-tela" data-t="entrar">Entrar ${ICO.seta}</button>${btnDigital()}${S.googleAtivo ? `<button class="btn-google" data-a="auth-google">${ICO.google}Continuar com o Google</button>` : ''}<button class="btn full ghost cta" data-a="auth-tela" data-t="criar">Criar conta</button>
       <button class="lnk" data-a="auth-tela" data-t="esqueci">Esqueci minha senha</button></div></div>`;
   if (a.tela === 'criar') return caixa('Criar conta', 'Seus treinos ficam salvos na sua conta e aparecem em qualquer aparelho.', `<form data-form="auth-criar" class="fields" style="margin-top:12px">
     <div class="field larga"><label for="a-nome">Nome</label><input id="a-nome" autocomplete="given-name" maxlength="60" required></div>
@@ -1060,7 +1074,7 @@ function vAuth() {
   return caixa('Entrar', 'Entre para ver seus treinos, cargas e evolução.', `<form data-form="auth-entrar" style="margin-top:12px">
     <div class="field"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="email" inputmode="email" required value="${esc(a.email || '')}"></div>
     <div class="field" style="margin-top:9px"><label for="a-senha">Senha</label><input id="a-senha" type="password" autocomplete="current-password" required></div>
-    <button class="btn full cta" type="submit" style="margin-top:12px">Entrar</button></form>${S.googleAtivo ? `<button class="btn-google" style="margin-top:10px" data-a="auth-google">${ICO.google}Continuar com o Google</button>` : ''}
+    <button class="btn full cta" type="submit" style="margin-top:12px">Entrar</button></form>${btnDigital('style="margin-top:10px"')}${S.googleAtivo ? `<button class="btn-google" style="margin-top:10px" data-a="auth-google">${ICO.google}Continuar com o Google</button>` : ''}
     <div class="row between" style="margin-top:8px"><button class="lnk" data-a="auth-tela" data-t="criar">Criar conta</button><button class="lnk" data-a="auth-tela" data-t="esqueci">Esqueci minha senha</button></div>`);
 }
 function vConsent() {
@@ -1332,26 +1346,74 @@ function mapaCorpo(id) {
 }
 
 /* vídeo dentro do app: um vídeo escolhido por exercício (piloto) ou o link que a pessoa fixou na Biblioteca */
-/* Book de vídeos (Treino A completo e parte do C): o link fixado pela pessoa na Biblioteca tem prioridade */
+/* vídeos principais: Shorts escolhidos pelo Carlos num canal só (Prof. Matheus Gomes); o link fixado pela pessoa na Biblioteca tem prioridade */
 const VIDEOS_PADRAO = {
-  supino_inclinado: 'bZtXNt7gbPY', puxada_neutra: '76zk3CD2JJQ', crucifixo: '0yDRsJ19OF4', remada_baixa: '7_6CSFfIHfk',
-  elevacao_lateral_maquina: '8GvYpmAL4zA', triceps_corda: 'M-DTY40JG9M', rosca_maquina: 'KpHxwE4jjcs',
-  crucifixo_invertido: '_7ZJJy3Z99k', triceps_frances: 'lkEoFfNyzkk', rosca_scott: 'JWRoHF7I2NQ', triceps_testa: 'LOCarvWMhNQ',
-  leg_press: 'FeZ8D00iK5E', mesa_flexora: 'sWSm1pWb3lw', extensora: 'mruTNzILY3U', abdutora: 'tmhQjzgSPRg', panturrilha: 'Ua7jx6wKyMw',
-  abdominal: 'pR7WtwTOOTw', elevacao_lateral: 'ze9B6VX4nUs', supino_maquina: 'LPk4vsVWGoM', remada_aberta: 'xpkNxVSN2ec',
-  leg_press_alto: 'Vnb-oj9pB84', flexora: '_TDeIBSoKzk', extensao_lombar: 'hfFVbXJ5UvQ', adutora: 'JSdgUsiublY',
-  panturrilha_sentado: 'VMF0WZZ_BTU', pallof: 'uUcHRhMvTTo', gluteo_maquina: 'iQAHZjXkNi8', elevacao_lateral_halter: 'gURBTU9VSJg',
-  rosca_direta: 'CBL8S3q9e60', rosca_inversa: 'qGy5g0z3sOs'
+  supino_inclinado: 'acC6hFJuQPU',
+  puxada_neutra: 'MzjQ92Lv9Xk',
+  crucifixo: 'lSV3-8mlUnc',
+  remada_baixa: '6ml0iz19DPw',
+  elevacao_lateral_maquina: 'j7xmT_IqztY',
+  triceps_corda: 'eJHyVyKVMZ4',
+  rosca_maquina: '4DwBvjRwYwg',
+  crucifixo_invertido: 'b_VtMa5S_YU',
+  triceps_frances: 'O3rDfWaXhhs',
+  rosca_scott: '5NfVgT4CHFQ',
+  triceps_testa: 'sb7dx0Ob9Ig',
+  leg_press: 'e9wrvK3kcQs',
+  mesa_flexora: 'jyZlk9qWYDc',
+  extensora: 'RNxjVs8l55k',
+  abdutora: 'MxO5joRVQUs',
+  panturrilha: 'VgPf-8vFZkk',
+  abdominal: 'tvPNLsuOulg',
+  elevacao_lateral: 'eLpfsGNV5nU',
+  supino_maquina: 'M-3NZhiypDc',
+  remada_aberta: 'BGs-8aVpT3Y',
+  leg_press_alto: 'CHRqgc7iXIc',
+  flexora: '_TDeIBSoKzk',
+  extensao_lombar: 'UAFP97Auvwc',
+  adutora: 'lsb18p3cOAk',
+  panturrilha_sentado: 'VsFkpRULNwg',
+  pallof: 'vgkJb94lK10',
+  gluteo_maquina: 'aG8F1RO-N24',
+  elevacao_lateral_halter: 'yURmeIEl1Fg',
+  rosca_direta: 'ejoas0rScwo',
+  rosca_inversa: 'POd7l3C_rFE'
 };
 /* alternativas do Book: usadas automaticamente quando o vídeo principal não pode tocar dentro do app */
+/* reservas em ordem: o vídeo anterior do Book e a alternativa; usadas sozinhas quando o principal não toca dentro do app */
 const VIDEOS_ALT = {
-  puxada_neutra: '4nKSS0bS-_A', crucifixo: '04ZynYimGZk', remada_baixa: 'zNPcKFqLFd4', elevacao_lateral_maquina: '7KmaeJ4z66s',
-  triceps_corda: 'TLnIVtuuoYw', rosca_maquina: 'SMg4mUOplwA', crucifixo_invertido: '5-HhI9yCuUo', rosca_scott: 'TTvOm65EKnA',
-  leg_press: 'itJDw9I1qu4', mesa_flexora: 'wUobhTUtvn4', extensora: 'WKqCZh9hdCc', abdutora: 'fY25005DmLs', panturrilha: 'F7_8z_7Kwks',
-  abdominal: 'rSlTGve9n0Y', elevacao_lateral: 'KNLUNdV9pvg', supino_maquina: 'e-F32H5SF6E', remada_aberta: 'NHoOrhLr9mc',
-  leg_press_alto: 'QcfUX2f0LIU', flexora: 'ZsNgFL4cfMM', extensao_lombar: 'kLcjscPyLqI', adutora: 'FvWoJW4qZQ0',
-  panturrilha_sentado: 'N_bpzfkp0mg', pallof: '91zJZhRx2u0', elevacao_lateral_halter: 'rOwmwow9DMM', rosca_direta: 'ghl0bfn-hA0', rosca_inversa: 'Ys_Iy4ajKps'
+  supino_inclinado: ['bZtXNt7gbPY'],
+  puxada_neutra: ['76zk3CD2JJQ', '4nKSS0bS-_A'],
+  crucifixo: ['0yDRsJ19OF4', '04ZynYimGZk'],
+  remada_baixa: ['7_6CSFfIHfk', 'zNPcKFqLFd4'],
+  elevacao_lateral_maquina: ['8GvYpmAL4zA', '7KmaeJ4z66s'],
+  triceps_corda: ['M-DTY40JG9M', 'TLnIVtuuoYw'],
+  rosca_maquina: ['KpHxwE4jjcs', 'SMg4mUOplwA'],
+  crucifixo_invertido: ['_7ZJJy3Z99k', '5-HhI9yCuUo'],
+  triceps_frances: ['lkEoFfNyzkk'],
+  rosca_scott: ['JWRoHF7I2NQ', 'TTvOm65EKnA'],
+  triceps_testa: ['LOCarvWMhNQ'],
+  leg_press: ['FeZ8D00iK5E', 'itJDw9I1qu4'],
+  mesa_flexora: ['sWSm1pWb3lw', 'wUobhTUtvn4'],
+  extensora: ['mruTNzILY3U', 'WKqCZh9hdCc'],
+  abdutora: ['tmhQjzgSPRg', 'fY25005DmLs'],
+  panturrilha: ['Ua7jx6wKyMw', 'F7_8z_7Kwks'],
+  abdominal: ['pR7WtwTOOTw', 'rSlTGve9n0Y'],
+  elevacao_lateral: ['ze9B6VX4nUs', 'KNLUNdV9pvg'],
+  supino_maquina: ['LPk4vsVWGoM', 'e-F32H5SF6E'],
+  remada_aberta: ['xpkNxVSN2ec', 'NHoOrhLr9mc'],
+  leg_press_alto: ['Vnb-oj9pB84', 'QcfUX2f0LIU'],
+  flexora: ['ZsNgFL4cfMM'],
+  extensao_lombar: ['hfFVbXJ5UvQ', 'kLcjscPyLqI'],
+  adutora: ['JSdgUsiublY', 'FvWoJW4qZQ0'],
+  panturrilha_sentado: ['VMF0WZZ_BTU', 'N_bpzfkp0mg'],
+  pallof: ['uUcHRhMvTTo', '91zJZhRx2u0'],
+  gluteo_maquina: ['iQAHZjXkNi8'],
+  elevacao_lateral_halter: ['gURBTU9VSJg', 'rOwmwow9DMM'],
+  rosca_direta: ['CBL8S3q9e60', 'ghl0bfn-hA0'],
+  rosca_inversa: ['qGy5g0z3sOs', 'Ys_Iy4ajKps']
 };
+const VIDEOS_VERTICAIS = new Set(['4DwBvjRwYwg', '5NfVgT4CHFQ', '6ml0iz19DPw', 'BGs-8aVpT3Y', 'CHRqgc7iXIc', 'M-3NZhiypDc', 'MxO5joRVQUs', 'MzjQ92Lv9Xk', 'O3rDfWaXhhs', 'POd7l3C_rFE', 'RNxjVs8l55k', 'UAFP97Auvwc', 'VgPf-8vFZkk', 'VsFkpRULNwg', 'aG8F1RO-N24', 'acC6hFJuQPU', 'b_VtMa5S_YU', 'e9wrvK3kcQs', 'eJHyVyKVMZ4', 'eLpfsGNV5nU', 'ejoas0rScwo', 'j7xmT_IqztY', 'jyZlk9qWYDc', 'lsb18p3cOAk', 'sb7dx0Ob9Ig', 'tvPNLsuOulg', 'vgkJb94lK10', 'yURmeIEl1Fg']);
 let apiYT = null;
 function carregarApiYT() {
   if (apiYT) return apiYT;
@@ -1367,10 +1429,10 @@ function carregarApiYT() {
 }
 const srcVideo = vid => `${perfil().ytPremium ? 'https://www.youtube.com' : 'https://www.youtube-nocookie.com'}/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
 function tocarVideo(box, exId, titulo) {
-  const fila = [videoDe(exId), midia().videos[exId] ? null : VIDEOS_ALT[exId]].filter((v, i, a) => v && a.indexOf(v) === i);
+  const fila = [videoDe(exId), ...(midia().videos[exId] ? [] : (VIDEOS_ALT[exId] || []))].filter((v, i, a) => v && a.indexOf(v) === i);
   const reserva = box.nextElementSibling && box.nextElementSibling.querySelector('a');
   const montar = i => {
-    box.classList.remove('vazio');
+    box.classList.remove('vazio'); box.classList.toggle('vertical', VIDEOS_VERTICAIS.has(fila[i]));
     box.innerHTML = `<iframe src="${srcVideo(fila[i])}" title="${esc(titulo)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     if (reserva) reserva.href = 'https://www.youtube.com/watch?v=' + fila[i];
     carregarApiYT().then(YT => {
@@ -1379,7 +1441,7 @@ function tocarVideo(box, exId, titulo) {
         new YT.Player(fr, { events: { onError: () => {
           if (!box.isConnected || box.querySelector('iframe') !== fr) return;
           if (i + 1 < fila.length) { montar(i + 1); return; }
-          box.classList.add('vazio');
+          box.classList.remove('vertical'); box.classList.add('vazio');
           box.innerHTML = `${ICO.haltere}<span>Este vídeo não abre dentro do app</span><a class="btn ghost small" href="https://www.youtube.com/watch?v=${fila[0]}" target="_blank" rel="noopener">▶ Abrir no YouTube</a>`;
         } } });
       } catch (err) { /* sem a API do YouTube, o vídeo toca normalmente, só sem a troca automática */ }
@@ -1437,6 +1499,7 @@ async function mostrarAvisos() {
   if (r.startsWith('go:')) ir(r.slice(3));
 }
 const ICO = {
+  digital: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11v3a6 6 0 0 1-1 3.4"/><path d="M8.5 9.5A3.5 3.5 0 0 1 15.5 11v1.5"/><path d="M15.5 15a10 10 0 0 1-.8 3.5"/><path d="M6 13.5V11a6 6 0 0 1 10.2-4.3"/><path d="M18 9.6c.3.8.5 1.6.5 2.4v1"/><path d="M3.6 8A9.5 9.5 0 0 1 19.4 6"/><path d="M5.2 17.5A9 9 0 0 0 6 15"/></svg>',
   relogio: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   camadas: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>',
@@ -2123,6 +2186,9 @@ function vProfile() {
       <p class="smalltxt" id="status" style="margin-top:6px">${esc(statusTexto())}</p>
       <p class="smalltxt">Versão do app ${VERSAO_APP}${AMBIENTE === 'teste' ? ' · ambiente de teste' : ''}.</p>
       ${S.trocarSenha ? `<form data-form="trocar-senha" class="fields" style="margin-top:10px"><div class="field"><label for="t-senha">Nova senha (mín. 8)</label><input id="t-senha" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="t-senha2">Repita a senha</label><input id="t-senha2" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn small larga field" type="submit">Salvar nova senha</button></form>` : ''}
+      <div class="cad-sec" style="margin-top:14px"><span class="rot">Entrar com a digital</span>${temWebAuthn() ? `<div class="row" style="gap:8px"><button class="btn secondary small" data-a="digital-ativar">${ICO.digital} Ativar neste aparelho</button>${S.digitais === undefined ? `<button class="lnk" data-a="digital-lista">Ver aparelhos cadastrados</button>` : ''}</div>
+        ${Array.isArray(S.digitais) ? (S.digitais.length ? `<ul class="digitais">${S.digitais.map(p => `<li><span>${esc(p.friendly_name || 'Aparelho')}<small class="smalltxt" style="display:block">desde ${esc(String(p.created_at || '').slice(0, 10).split('-').reverse().join('/'))}</small></span><button class="lnk perigo" data-a="digital-remover" data-id="${esc(p.id)}">Remover</button></li>`).join('')}</ul>` : '<p class="smalltxt" style="margin:6px 0 0">Nenhum aparelho cadastrado ainda.</p>') : ''}
+        <p class="smalltxt" style="margin:6px 0 0">Depois de ativar, a tela de entrada mostra "Entrar com a digital": basta tocar no sensor do celular, sem digitar senha.</p>` : '<p class="smalltxt" style="margin:0">Este navegador não permite entrar com a digital.</p>'}</div>
       <div class="cad-sec" style="margin-top:14px"><span class="rot">Vídeos dos exercícios</span><div class="chips"><button class="chip" data-a="yt-premium" aria-pressed="${!!perfil().ytPremium}">${perfil().ytPremium ? '✓ ' : ''}Tenho YouTube Premium</button></div><p class="smalltxt" style="margin:6px 0 0">Ligado, os vídeos usam a sua conta do YouTube aberta neste navegador e tocam sem anúncios.</p></div>
       <div class="row" style="margin-top:10px"><button class="btn secondary small" data-a="trocar-senha">${S.trocarSenha ? 'Cancelar' : 'Trocar senha'}</button><button class="btn secondary small" data-a="auth-sair">Sair da conta</button>${dadosLegados() && LS.get('mt_migracao', null) === 'recusada' ? `<button class="btn secondary small" data-a="migrar">Enviar dados antigos deste celular</button>` : ''}</div></div>
     <div class="card"><h3>${esc(p.nome || 'Seu perfil')}</h3><p class="smalltxt">Objetivo: ${esc(p.objetivo || 'não definido')}. Programa: ${esc(prog().nome)}.</p>
@@ -2363,6 +2429,29 @@ async function tratarClique(ev) {
     }
     case 'voltar': voltar(); break;
     case 'menu-conta': menuConta(); break;
+    case 'auth-digital': {
+      if (!sb) return; S.auth.erro = ''; S.auth.carregando = true; render();
+      let r; try { r = await sb.auth.signInWithPasskey(); } catch (err) { r = { error: err }; }
+      S.auth.carregando = false;
+      if (r && r.error) { S.auth.erro = msgDigital(r.error); render(); }
+      break;
+    }
+    case 'digital-ativar': {
+      if (!sb) return;
+      const ua = navigator.userAgent || '', nome = (/Android/i.test(ua) ? 'Celular Android' : /iPhone|iPad/i.test(ua) ? 'iPhone' : 'Computador') + ' · ' + new Date().toLocaleDateString('pt-BR');
+      let r; try { r = await sb.auth.registerPasskey({ friendlyName: nome }); } catch (err) { r = { error: err }; }
+      if (r && r.error) { toast(cancelouDigital(r.error) ? 'Cadastro da digital cancelado' : `Não foi possível ativar (${msgDigital(r.error)})`, 6000); break; }
+      try { localStorage.setItem(chaveDigital(), '1'); } catch (err) {}
+      toast('Pronto! Na próxima entrada, use a digital.'); await carregarDigitais(); render(); break;
+    }
+    case 'digital-lista': await carregarDigitais(); render(); break;
+    case 'digital-remover': {
+      if (!await confirmar('Remover a entrada com a digital deste aparelho?', 'Remover', 'Cancelar')) return;
+      let r; try { r = await sb.auth.passkey.delete({ passkeyId: b.dataset.id }); } catch (err) { r = { error: err }; }
+      if (r && r.error) { toast(`Não foi possível remover (${motivo(r.error)})`); break; }
+      await carregarDigitais(); if (!S.digitais.length) { try { localStorage.removeItem(chaveDigital()); } catch (err) {} }
+      toast('Removido'); render(); break;
+    }
     case 'yt-premium': { const p = Object.assign({}, perfil(), { ytPremium: !perfil().ytPremium }); gravarDoc(p); render(); toast(p.ytPremium ? 'Vídeos pela sua conta do YouTube Premium' : 'Vídeos no modo padrão'); break; }
     case 'tocar-video': { const box = b.parentElement, ex = b.dataset.capaEx; tocarVideo(box, ex, b.getAttribute('aria-label') || 'Vídeo de execução'); break; }
     case 'auth-google': { if (!sb) return; const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: urlApp() } }); if (error) { S.auth.erro = msgAuth(error); render(); } break; }
