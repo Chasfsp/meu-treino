@@ -238,6 +238,23 @@ button.btn-video{ background:transparent; cursor:pointer; }
 .t-fill{ height:100%; width:100%; background:var(--orange); transform-origin:left; }
 #timer.acabou .t-tempo{ color:var(--green); }
 .modal{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:20px; }
+.modalbox.troca-box{ width:min(100%,520px); max-height:90vh; overflow:auto; padding:18px; text-align:left; }
+.troca-atual{ display:flex; gap:12px; align-items:center; background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:10px; margin:10px 0; }
+.troca-atual img,.troca-atual .ico{ width:76px; height:50px; object-fit:cover; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#000; }
+.troca-atual strong{ display:block; font-size:15px; }
+.troca-op{ border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--panel2); margin-top:12px; }
+.troca-midia{ position:relative; aspect-ratio:16/9; background:#000; cursor:pointer; overflow:hidden; }
+.troca-midia img,.troca-midia iframe{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border:0; }
+.troca-midia.vertical{ aspect-ratio:auto; height:min(60vh,520px); }
+.troca-midia.vazio{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--muted); cursor:default; padding:12px; text-align:center; }
+.troca-info{ padding:12px 14px 14px; }
+.troca-tit{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.troca-tit strong{ font-size:16px; line-height:1.25; }
+.musc{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.musc span{ font-size:12px; padding:3px 9px; border-radius:12px; background:var(--panel); color:var(--muted); border:1px solid var(--line); }
+.musc span.p{ background:var(--tile); color:var(--orange); border-color:#5A2A0A; font-weight:700; }
+.troca-dica{ margin:0 0 10px; }
+.troca-sempre{ position:sticky; bottom:-18px; background:var(--panel); padding:12px 0 2px; margin-top:12px; display:flex; flex-direction:column; gap:6px; }
 .modalbox{ width:min(100%,420px); background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:24px; text-align:center; box-shadow:0 15px 50px rgba(0,0,0,.4); }
 .modalbox ul{ text-align:left; margin:10px 0 0; padding-left:20px; }
 #toast{ position:fixed; bottom:calc(96px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:10px 16px; border-radius:12px; z-index:50; box-shadow:0 5px 20px rgba(0,0,0,.3); max-width:calc(100% - 32px); opacity:0; pointer-events:none; transition:opacity .2s ease; font-weight:600; }
@@ -459,7 +476,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.12';
+const VERSAO_APP = '4.14';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -1367,7 +1384,7 @@ const CONTEUDO_EX = {
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
 /* fotos curadas dos exercícios: arquivos de texto fotos-ex-1.js a fotos-ex-4.js no repositório oficial (o teste usa os mesmos, pelo mesmo domínio) */
 /* arquivos de fotos no repositório oficial, pelo nome exato: as partes 5 a 7 antigas (cartões) não são mais usadas; as trocas estão no fotos-ex-15.js e as próximas partes seguem 16, 17... */
-const BASE_FOTOS_EX = '/meu-treino/', ARQS_FOTOS_EX = ['fotos-ex-1.js', 'fotos-ex-2.js', 'fotos-ex-3.js', 'fotos-ex-4.js', 'fotos-ex-15.js'], VERSAO_FOTOS_EX = '1';
+const BASE_FOTOS_EX = '/meu-treino/', ARQS_FOTOS_EX = ['fotos-ex-1.js', 'fotos-ex-2.js', 'fotos-ex-3.js', 'fotos-ex-4.js', 'fotos-ex-15.js', 'fotos-ex-16.js'], VERSAO_FOTOS_EX = '1';
 const fotosEx = () => window.FOTOS_EX || {};
 const urlFotoEx = id => fotosEx()[id] || (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null;
 function carregarFotosEx() {
@@ -1811,12 +1828,28 @@ async function trocarExercicio(id) {
   const ocupados = s.lista.filter(x => x !== id);
   const opcoes = [...new Set([original, ...alternativasDe(original), ...alternativasDe(id)])].filter(k => k !== id && EX[k] && !ocupados.includes(k));
   if (!opcoes.length) { toast('Ainda não há troca para este exercício'); return; }
-  const linha = k => `<button class="btn secondary full" style="justify-content:space-between;text-align:left;margin-top:8px" data-r="${k}"><span><strong>${esc(EX[k].nome)}</strong><br><small class="muted">${esc(EX[k].equip)}${k === original ? ' · exercício do programa' : ''}</small></span><span>Escolher</span></button>`;
-  const html = `<h3 style="margin:0 0 4px">Trocar exercício</h3><p class="smalltxt" style="margin:0">Agora: <strong>${esc(nomeEx(id))}</strong>. Opções equivalentes:</p>
-    <div style="max-height:52vh;overflow:auto;text-align:left">${opcoes.map(linha).join('')}</div>
-    <label class="row" style="gap:8px;margin-top:12px;justify-content:flex-start;flex-wrap:nowrap;text-align:left"><input type="checkbox" id="troca-sempre" checked style="width:20px;height:20px;flex-shrink:0"><span class="smalltxt" style="margin:0">Manter a troca nos próximos treinos</span></label>`;
-  const pendente = modal(html, [['Cancelar', '0', 'secondary']]);
-  let sempre = true; const cx = document.querySelector('.modal #troca-sempre'); if (cx) cx.addEventListener('change', () => { sempre = cx.checked; });
+  const miniatura = k => { const u = urlFotoEx(k); return u ? `<img src="${esc(u)}" alt="" data-esconde>` : `<span class="ico" aria-hidden="true">${ICON_CAM}</span>`; };
+  const cartao = k => {
+    const d = EX[k], u = urlFotoEx(k), vid = videoDe(k);
+    const musc = `<div class="musc">${d.g.map(g => `<span class="p">${esc(g)}</span>`).join('')}${(d.gi || []).map(g => `<span>${esc(g)}</span>`).join('')}</div>`;
+    const midiaOp = (u || vid) ? `<div class="troca-midia"${vid ? ` data-tv="${k}" role="button" tabindex="0" aria-label="Ver o vídeo de ${esc(d.nome)}"` : ''}>${u ? `<img src="${esc(u)}" alt="${esc(d.nome)}" data-esconde>` : ''}${vid ? '<span class="exv-play" aria-hidden="true">▶</span><span class="exv-capa-txt">Ver vídeo</span>' : ''}</div>` : '';
+    return `<article class="troca-op">${midiaOp}<div class="troca-info"><div class="troca-tit"><strong>${esc(d.nome)}</strong>${k === original ? '<span class="pill">Do programa</span>' : ''}</div>
+      <small class="muted">${esc(d.equip)} · ${d.series || 3} séries de ${d.min} a ${d.max}</small>${musc}${d.dica ? `<p class="smalltxt troca-dica">${esc(d.dica)}</p>` : ''}
+      <button class="btn full cta" data-r="${k}">Escolher este</button></div></article>`;
+  };
+  const html = `<div class="troca"><h3 style="margin:0">Trocar exercício</h3>
+    <div class="troca-atual">${miniatura(id)}<div><small class="muted">Agora</small><strong>${esc(nomeEx(id))}</strong></div></div>
+    <p class="smalltxt" style="margin:0">${opcoes.length} ${opcoes.length > 1 ? 'opções equivalentes' : 'opção equivalente'}. Toque na foto para ver o vídeo antes de escolher.</p>
+    ${opcoes.map(cartao).join('')}
+    <div class="troca-sempre"><span class="smalltxt">Vale para:</span><div class="chips peq"><button class="chip" data-sempre="0" aria-pressed="false">Só hoje</button><button class="chip" data-sempre="1" aria-pressed="true">Também nos próximos treinos</button></div></div></div>`;
+  const pendente = modal(html, [['Cancelar', '0', 'secondary']], 'troca-box');
+  let sempre = true; const caixa = document.querySelector('.modal:last-of-type .troca');
+  if (caixa) caixa.addEventListener('click', ev => {
+    const ch = ev.target.closest('[data-sempre]');
+    if (ch) { sempre = ch.dataset.sempre === '1'; caixa.querySelectorAll('[data-sempre]').forEach(b => b.setAttribute('aria-pressed', String(b === ch))); return; }
+    const tv = ev.target.closest('[data-tv]');
+    if (tv) { const k = tv.dataset.tv; tv.removeAttribute('data-tv'); tv.removeAttribute('role'); tocarVideo(tv, k, 'Vídeo de ' + EX[k].nome); }
+  });
   const novo = await pendente;
   if (!novo || novo === '0' || !EX[novo]) return;
   const pOrig = e.p || prescricao(id, s.treino), pNovo = Object.assign({}, pOrig, { rest: EX[novo].rest || pOrig.rest }), v = valoresIniciais(novo, pNovo);
@@ -2423,10 +2456,10 @@ function liberarTela() { try { wl && wl.release(); } catch (e) {} wl = null; }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.page === 'session') manterTelaLigada(); });
 let tToast = null;
 function toast(msg, dur) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(tToast); tToast = setTimeout(() => el.classList.remove('on'), dur || 2800); }
-function modal(html, botoes) {
+function modal(html, botoes, classe) {
   return new Promise(res => {
     const m = document.createElement('div'); m.className = 'modal';
-    m.innerHTML = `<div class="modalbox" role="dialog" aria-modal="true">${html}<div class="row" style="margin-top:16px;justify-content:center">${botoes.map(([t, v, cls]) => `<button class="btn ${cls || ''}" style="flex:1" data-r="${v}">${esc(t)}</button>`).join('')}</div></div>`;
+    m.innerHTML = `<div class="modalbox${classe ? ' ' + classe : ''}" role="dialog" aria-modal="true">${html}<div class="row" style="margin-top:16px;justify-content:center">${botoes.map(([t, v, cls]) => `<button class="btn ${cls || ''}" style="flex:1" data-r="${v}">${esc(t)}</button>`).join('')}</div></div>`;
     m.addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b && e.target !== m) return; m.remove(); res(b ? b.dataset.r : '0'); });
     document.body.appendChild(m); const ult = m.querySelectorAll('[data-r]'); ult[ult.length - 1].focus();
   });
