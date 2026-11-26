@@ -459,7 +459,7 @@ input,textarea,select,[contenteditable]{ -webkit-user-select:text; user-select:t
 'use strict';
 
 /* ================= Programas (dados, não código) ================= */
-const VERSAO_APP = '4.10';
+const VERSAO_APP = '4.11';
 /* o mesmo arquivo serve ao endereço oficial e ao de teste: cada um usa o seu banco */
 const AMBIENTES = {
   producao: { url: 'https://gspcitfcvypdchovnhve.supabase.co', chave: 'sb_publishable_VkL080hE9jt4hm_mdt4-Bg_0S3CXDV4' },
@@ -526,14 +526,33 @@ const EX = {
   rosca_direta:        { nome: 'Rosca direta sentado', equip: 'Halteres ou máquina', g: ['Bíceps'], gi: [], series: 2, min: 10, max: 12, rest: 90, dica: 'Cotovelos parados ao lado do corpo.' },
   gluteo_maquina:      { nome: 'Glúteo máquina', equip: 'Máquina', g: ['Glúteo'], gi: [], series: 2, min: 12, max: 15, rest: 90, dica: 'Empurre com o calcanhar, sem arquear a lombar.' },
   rosca_inversa:       { nome: 'Rosca inversa', equip: 'Polia, barra ou corda', g: ['Antebraço'], gi: ['Bíceps'], series: 2, min: 12, max: 15, rest: 90, dica: 'Punhos alinhados e cotovelos parados.' },
-  triceps_testa:       { nome: 'Tríceps testa na polia', equip: 'Polia', g: ['Tríceps'], gi: [], series: 2, min: 10, max: 12, rest: 90, dica: 'Cotovelos estáveis apontando para cima.' }
+  triceps_testa:       { nome: 'Tríceps testa na polia', equip: 'Polia', g: ['Tríceps'], gi: [], series: 2, min: 10, max: 12, rest: 90, dica: 'Cotovelos estáveis apontando para cima.' },
+  supino_inclinado_halter: { nome: 'Supino inclinado com halteres', equip: 'Halteres e banco inclinado', g: ['Peito'], gi: ['Tríceps', 'Ombro anterior'], series: 3, min: 8, max: 12, rest: 120, dica: 'Banco entre 30 e 45 graus; desça os halteres até a linha do peito em 2 a 3 segundos.' },
+  supino_reto_halter: { nome: 'Supino reto com halteres', equip: 'Halteres e banco reto', g: ['Peito'], gi: ['Tríceps', 'Ombro anterior'], series: 3, min: 8, max: 12, rest: 120, dica: 'Escápulas apoiadas no banco e cotovelos abaixo da linha dos ombros.' },
+  crucifixo_polia: { nome: 'Crucifixo na polia (crossover)', equip: 'Polia (crossover)', g: ['Peito'], gi: ['Ombro anterior'], series: 3, min: 12, max: 15, rest: 90, dica: 'Cotovelos levemente dobrados e fixos; feche os braços à frente do peito.' },
+  crucifixo_halter: { nome: 'Crucifixo com halteres', equip: 'Halteres e banco reto', g: ['Peito'], gi: ['Ombro anterior'], series: 3, min: 12, max: 15, rest: 90, dica: 'Abra só até sentir o peito alongar, sem descer os halteres abaixo do banco.' },
+  puxada_aberta: { nome: 'Puxada alta aberta', equip: 'Polia com barra', g: ['Costas'], gi: ['Bíceps', 'Ombro posterior'], series: 3, min: 8, max: 12, rest: 150, dica: 'Puxe a barra até a parte de cima do peito, sem levar atrás da nuca.' },
+  puxada_articulada: { nome: 'Puxada articulada', equip: 'Máquina articulada', g: ['Costas'], gi: ['Bíceps', 'Ombro posterior'], series: 3, min: 8, max: 12, rest: 150, dica: 'Cotovelos para baixo e peito aberto; volte devagar até estender os braços.' },
+  remada_serrote: { nome: 'Remada unilateral com halter (serrote)', equip: 'Halter e banco', g: ['Costas'], gi: ['Bíceps', 'Ombro posterior'], series: 3, min: 8, max: 12, rest: 120, dica: 'Costas retas; puxe o cotovelo para trás junto ao corpo, sem girar o tronco.' },
+  crucifixo_inverso_polia: { nome: 'Crucifixo inverso na polia', equip: 'Polia (crossover)', g: ['Ombro posterior'], gi: ['Costas'], series: 3, min: 12, max: 15, rest: 90, dica: 'Braços abrindo na linha dos ombros, com os cotovelos levemente dobrados.' },
+  face_pull: { nome: 'Face pull na polia', equip: 'Polia com corda', g: ['Ombro posterior'], gi: ['Costas'], series: 3, min: 12, max: 15, rest: 90, dica: 'Puxe a corda em direção ao rosto com os cotovelos altos e abertos.' },
+  triceps_maquina: { nome: 'Tríceps na máquina', equip: 'Máquina', g: ['Tríceps'], gi: [], series: 3, min: 10, max: 15, rest: 90, dica: 'Cotovelos parados junto ao corpo; estenda sem travar os cotovelos.' },
+  hack: { nome: 'Agachamento no hack', equip: 'Máquina hack', g: ['Quadríceps'], gi: ['Glúteo', 'Adutores'], series: 3, min: 8, max: 12, rest: 150, dica: 'Costas apoiadas; desça até os joelhos a 90 graus, apontando para os pés.' },
+  stiff: { nome: 'Stiff com halteres', equip: 'Halteres', g: ['Posterior de coxa'], gi: ['Glúteo', 'Lombar'], series: 3, min: 10, max: 12, rest: 120, dica: 'Quadril para trás e costas retas; desça até sentir o posterior alongar.' },
+  elevacao_pelvica: { nome: 'Elevação pélvica na máquina', equip: 'Máquina', g: ['Glúteo'], gi: ['Posterior de coxa'], series: 3, min: 10, max: 12, rest: 120, dica: 'Suba o quadril até alinhar com o tronco, sem arquear a lombar.' },
+  panturrilha_em_pe: { nome: 'Panturrilha em pé na máquina', equip: 'Máquina', g: ['Panturrilha'], gi: [], series: 3, min: 12, max: 15, rest: 60, dica: 'Desça o calcanhar até alongar e suba o máximo na ponta dos pés, com pausa.' },
+  aducao_polia: { nome: 'Adução na polia', equip: 'Polia baixa com caneleira', g: ['Adutores'], gi: [], series: 3, min: 12, max: 15, rest: 60, dica: 'Tronco ereto; cruze a perna à frente da outra com controle.' },
+  agachamento_sumo: { nome: 'Agachamento sumô com halter', equip: 'Halter', g: ['Adutores'], gi: ['Glúteo', 'Quadríceps'], series: 3, min: 10, max: 12, rest: 90, dica: 'Pés afastados e pontas para fora; joelhos na direção dos pés.' },
+  abducao_polia: { nome: 'Abdução na polia', equip: 'Polia baixa com caneleira', g: ['Glúteo médio'], gi: [], series: 3, min: 12, max: 15, rest: 60, dica: 'Tronco ereto; afaste a perna para o lado sem inclinar o corpo.' },
+  abdominal_polia: { nome: 'Abdominal na polia (ajoelhado)', equip: 'Polia com corda', g: ['Core'], gi: [], series: 3, min: 12, max: 15, rest: 60, dica: 'Flexione o tronco levando os cotovelos às coxas; o quadril fica parado.' },
+  prancha: { nome: 'Prancha', equip: 'Peso corporal', g: ['Core'], gi: [], series: 3, min: 20, max: 45, rest: 60, dica: 'Conte as repetições como segundos na posição. Corpo em linha reta, sem deixar o quadril cair.' }
 };
 const GRUPOS = ['Peito', 'Costas', 'Quadríceps', 'Posterior de coxa', 'Glúteo', 'Ombro lateral', 'Ombro posterior', 'Ombro anterior', 'Bíceps', 'Tríceps', 'Panturrilha', 'Glúteo médio', 'Adutores', 'Core', 'Lombar', 'Antebraço'];
 const GRUPOS_GRANDES = ['Peito', 'Costas', 'Quadríceps', 'Posterior de coxa', 'Glúteo'];
 const META_SEMANA = 10;
 /* valores iniciais para quem ainda não tem histórico: [carga em kg, repetições] */
 const INICIAIS = { elevacao_lateral_maquina: [10, 12], elevacao_lateral_halter: [4, 12], supino_inclinado: [20, 10], supino_maquina: [20, 10], crucifixo: [20, 12], puxada_neutra: [25, 10], remada_baixa: [25, 10], remada_aberta: [27.5, 10], elevacao_lateral: [4, 12], crucifixo_invertido: [15, 12], triceps_corda: [8, 12], triceps_frances: [8, 12], rosca_maquina: [12.5, 10], rosca_scott: [10, 10], leg_press: [60, 10], leg_press_alto: [50, 10], extensora: [20, 12], mesa_flexora: [20, 10], flexora: [20, 10], abdutora: [25, 12], adutora: [25, 12], panturrilha: [25, 12], panturrilha_sentado: [20, 12], abdominal: [20, 12], extensao_lombar: [0, 10], pallof: [5, 10], gluteo_maquina: [27.5, 12], rosca_direta: [10, 10], rosca_inversa: [10, 12], triceps_testa: [8, 10] };
-const incremento = id => (['leg_press', 'leg_press_alto'].includes(id) ? 5 : ['elevacao_lateral', 'elevacao_lateral_halter', 'pallof'].includes(id) ? 1 : 2.5);
+const incremento = id => (id === 'prancha' ? 0 : ['leg_press', 'leg_press_alto', 'hack', 'elevacao_pelvica'].includes(id) ? 5 : ['elevacao_lateral', 'elevacao_lateral_halter', 'pallof', 'aducao_polia', 'abducao_polia'].includes(id) ? 1 : 2.5);
 const ESFORCOS = [['Leve', 3], ['Moderado', 5], ['Difícil', 7], ['Muito difícil', 9]];
 const OBJETIVOS = ['Emagrecer preservando massa muscular', 'Ganhar massa muscular', 'Condicionamento', 'Força e saúde', 'Mobilidade e disposição'];
 const CAMPOS_MEDIDA = [['peso', 'Peso', 'kg'], ['cintura', 'Cintura', 'cm'], ['gordura', 'Gordura', '%'], ['magra', 'Massa magra', 'kg'], ['muscular', 'Massa muscular', 'kg']];
@@ -642,8 +661,32 @@ const itensTreino = t => (treinoDef(t) ? treinoDef(t).ex.map(it => {
   const base = typeof it === 'string' ? { id: it } : it, novo = trocas()[base.id];
   return novo && EX[novo] ? Object.assign({}, base, { id: novo, orig: base.id }) : base;
 }) : []);
-/* alternativas: mesmo grupo muscular principal */
-const alternativasDe = id => { const g = EX[id] && EX[id].g[0]; return g ? Object.keys(EX).filter(k => k !== id && EX[k].g[0] === g) : []; };
+/* trocas pelo mesmo tipo de movimento, preferindo máquina, depois cabo, depois halteres (lista aprovada em 26/11/2026) */
+const TROCAS = {'supino_inclinado': ['supino_maquina', 'supino_inclinado_halter'],
+  'supino_maquina': ['supino_inclinado', 'supino_reto_halter'],
+  'crucifixo': ['crucifixo_polia', 'crucifixo_halter'],
+  'puxada_neutra': ['puxada_aberta', 'puxada_articulada'],
+  'remada_baixa': ['remada_aberta', 'remada_serrote'],
+  'remada_aberta': ['remada_baixa', 'remada_serrote'],
+  'crucifixo_invertido': ['crucifixo_inverso_polia', 'face_pull'],
+  'elevacao_lateral': ['elevacao_lateral_maquina', 'elevacao_lateral_halter'],
+  'triceps_corda': ['triceps_frances', 'triceps_testa', 'triceps_maquina'],
+  'triceps_frances': ['triceps_corda', 'triceps_testa', 'triceps_maquina'],
+  'rosca_maquina': ['rosca_scott', 'rosca_direta', 'rosca_inversa'],
+  'rosca_scott': ['rosca_maquina', 'rosca_direta', 'rosca_inversa'],
+  'leg_press': ['leg_press_alto', 'hack'],
+  'extensora': ['hack', 'leg_press', 'leg_press_alto'],
+  'mesa_flexora': ['flexora', 'stiff'],
+  'flexora': ['mesa_flexora', 'stiff'],
+  'extensao_lombar': ['stiff', 'elevacao_pelvica'],
+  'leg_press_alto': ['leg_press', 'gluteo_maquina'],
+  'abdutora': ['abducao_polia', 'gluteo_maquina', 'elevacao_pelvica'],
+  'adutora': ['aducao_polia', 'agachamento_sumo'],
+  'panturrilha': ['panturrilha_sentado', 'panturrilha_em_pe'],
+  'panturrilha_sentado': ['panturrilha', 'panturrilha_em_pe'],
+  'abdominal': ['pallof', 'abdominal_polia'],
+  'pallof': ['abdominal', 'prancha']};
+const alternativasDe = id => { if (TROCAS[id]) return TROCAS[id].filter(k => EX[k]); const g = EX[id] && EX[id].g[0]; return g ? Object.keys(EX).filter(k => k !== id && EX[k].g[0] === g) : []; };
 function prescricao(id, t) {
   const d = EX[id] || {}, it = t && treinoDef(t) ? itensTreino(t).find(x => x.id === id) : null;
   return { series: (it && it.series) || d.series || 3, min: (it && it.min) || d.min || 8, max: (it && it.max) || d.max || 12, rest: d.rest || 90 };
@@ -1299,12 +1342,31 @@ const CONTEUDO_EX = {
   rosca_direta: { passos: ['Sentado, com as costas apoiadas e os halteres ao lado do corpo.', 'Flexione os cotovelos levando o peso até perto dos ombros.', 'Volte devagar até quase estender os braços.'], dicas: ['Cotovelos parados ao lado do corpo.', 'Com halteres, gire as palmas para cima ao subir.'], erros: ['Balançar o tronco para subir.', 'Levar os cotovelos para a frente.'] },
   gluteo_maquina: { passos: ['Ajuste a máquina, apoie peito e braços e coloque um pé na plataforma.', 'Empurre para trás com o calcanhar até estender o quadril.', 'Volte devagar, sem arquear a lombar.'], dicas: ['Contraia o glúteo no final.', 'Abdômen firme o tempo todo.'], erros: ['Arquear a lombar para empurrar mais longe.', 'Usar impulso.'] },
   rosca_inversa: { passos: ['De frente para a polia baixa, segure a barra ou a corda com as palmas para baixo.', 'Flexione os cotovelos mantendo os punhos alinhados.', 'Volte devagar até quase estender.'], dicas: ['Cotovelos parados ao lado do corpo.', 'Carga moderada: o antebraço cansa rápido.'], erros: ['Dobrar os punhos.', 'Balançar o tronco.'] },
-  triceps_testa: { passos: ['De costas para a polia, com os cotovelos apontando para cima e próximos.', 'Estenda os cotovelos levando a pegada para a frente.', 'Volte devagar até a altura da testa, sem mexer os cotovelos.'], dicas: ['Cotovelos estáveis e próximos.', 'Volta sempre controlada.'], erros: ['Abrir os cotovelos.', 'Mexer os ombros para ajudar.'] }
+  triceps_testa: { passos: ['De costas para a polia, com os cotovelos apontando para cima e próximos.', 'Estenda os cotovelos levando a pegada para a frente.', 'Volte devagar até a altura da testa, sem mexer os cotovelos.'], dicas: ['Cotovelos estáveis e próximos.', 'Volta sempre controlada.'], erros: ['Abrir os cotovelos.', 'Mexer os ombros para ajudar.'] },
+  supino_inclinado_halter: { passos: ['Ajuste o banco entre 30 e 45 graus e apoie bem as costas, com os pés firmes no chão.', 'Com os halteres na altura do peito, empurre para cima até quase estender os braços.', 'Desça em 2 a 3 segundos até a linha do peito, com os cotovelos abaixo dos ombros.'], dicas: ['Solte o ar ao empurrar e puxe o ar na descida.', 'Aproxime os halteres no alto sem bater um no outro.'], erros: ['Abrir demais os cotovelos, forçando o ombro.', 'Tirar as costas do banco para empurrar.'] },
+  supino_reto_halter: { passos: ['Deite no banco reto com os halteres na altura do peito e os pés firmes no chão.', 'Empurre para cima até quase estender os braços.', 'Desça devagar até a linha do peito, sem perder o apoio das costas.'], dicas: ['Solte o ar ao empurrar.', 'Mantenha os ombros baixos, longe das orelhas.'], erros: ['Deixar os halteres caírem rápido na descida.', 'Arquear demais a lombar para empurrar.'] },
+  crucifixo_polia: { passos: ['Fique no centro do crossover com as polias no alto e um pé à frente.', 'Com os cotovelos levemente dobrados, feche os braços até as mãos se encontrarem à frente do peito.', 'Volte devagar até sentir o peito alongar.'], dicas: ['Pense em abraçar uma árvore grande.', 'Tronco firme e levemente inclinado à frente.'], erros: ['Dobrar e estender os cotovelos, virando um supino.', 'Deixar o peso puxar os braços para trás de uma vez.'] },
+  crucifixo_halter: { passos: ['Deite no banco reto com os halteres acima do peito e os cotovelos levemente dobrados.', 'Abra os braços para os lados até sentir o peito alongar.', 'Feche de volta acima do peito, mantendo o mesmo ângulo dos cotovelos.'], dicas: ['Use carga menor que no supino.', 'Puxe o ar ao abrir e solte ao fechar.'], erros: ['Descer os halteres abaixo da linha do banco.', 'Estender os cotovelos por completo.'] },
+  puxada_aberta: { passos: ['Ajuste o apoio das coxas e segure a barra com as mãos mais afastadas que os ombros.', 'Puxe levando os cotovelos para baixo até a barra chegar à parte de cima do peito.', 'Volte devagar até estender os braços.'], dicas: ['Peito aberto e leve inclinação do tronco para trás.', 'Puxe com os cotovelos, não com as mãos.'], erros: ['Puxar a barra atrás da nuca.', 'Embalar o tronco para trás para ajudar.'] },
+  puxada_articulada: { passos: ['Ajuste o banco e o apoio das coxas e segure as alças com os braços estendidos.', 'Puxe levando os cotovelos para baixo até as alças chegarem perto dos ombros.', 'Volte devagar até estender os braços, sem soltar o peso.'], dicas: ['Mantenha o tronco parado durante todo o movimento.', 'Pode fazer um lado de cada vez, se a máquina permitir.'], erros: ['Encolher os ombros ao puxar.', 'Soltar o peso de uma vez na volta.'] },
+  remada_serrote: { passos: ['Apoie um joelho e uma mão no banco, com as costas retas e paralelas ao chão.', 'Puxe o halter levando o cotovelo para trás, junto ao corpo, até a altura da cintura.', 'Desça devagar até estender o braço.'], dicas: ['Comece sempre pelo lado mais fraco.', 'Olhe para o chão, com o pescoço alinhado.'], erros: ['Girar o tronco para subir o peso.', 'Arredondar as costas.'] },
+  crucifixo_inverso_polia: { passos: ['Ajuste as polias na altura dos ombros e segure os cabos cruzados à frente do corpo.', 'Abra os braços para os lados até a linha dos ombros.', 'Volte devagar até cruzar os braços de novo.'], dicas: ['Junte as escápulas no fim do movimento.', 'Use carga leve e movimento controlado.'], erros: ['Dobrar os cotovelos, virando uma remada.', 'Jogar o tronco para trás para abrir.'] },
+  face_pull: { passos: ['Ajuste a polia na altura do rosto e segure a corda com os braços estendidos.', 'Puxe a corda em direção ao rosto, abrindo os cotovelos para os lados e para cima.', 'Volte devagar até estender os braços.'], dicas: ['No fim, as mãos ficam ao lado das orelhas.', 'Tronco parado e firme.'], erros: ['Deixar os cotovelos caírem abaixo dos ombros.', 'Inclinar o corpo para trás para puxar.'] },
+  triceps_maquina: { passos: ['Ajuste o banco para os cotovelos ficarem alinhados ao eixo da máquina.', 'Empurre as alças para baixo até quase estender os braços.', 'Volte devagar até os cotovelos ficarem dobrados a 90 graus.'], dicas: ['Solte o ar ao empurrar.', 'Costas apoiadas no encosto.'], erros: ['Usar o peso do corpo para empurrar.', 'Travar os cotovelos no fim.'] },
+  hack: { passos: ['Apoie as costas e os ombros nas almofadas, com os pés no meio da plataforma.', 'Destrave a máquina e desça dobrando os joelhos até cerca de 90 graus.', 'Suba empurrando a plataforma, sem travar os joelhos no alto.'], dicas: ['Joelhos sempre na direção das pontas dos pés.', 'Solte o ar ao subir.'], erros: ['Deixar os joelhos caírem para dentro.', 'Tirar o quadril do encosto no fundo.'] },
+  stiff: { passos: ['Em pé, segure os halteres à frente das coxas, com os joelhos levemente dobrados.', 'Leve o quadril para trás e desça os halteres rente às pernas até o meio da canela.', 'Suba empurrando o quadril para a frente, com as costas retas.'], dicas: ['Os halteres passam pertinho das pernas.', 'Desça só até onde conseguir manter as costas retas.'], erros: ['Arredondar as costas.', 'Transformar o movimento num agachamento.'] },
+  elevacao_pelvica: { passos: ['Apoie a parte de cima das costas no encosto e ajuste a almofada sobre o quadril.', 'Empurre o quadril para cima até alinhar com o tronco e os joelhos.', 'Desça devagar sem encostar o peso.'], dicas: ['Faça uma pausa curta no alto, contraindo o glúteo.', 'Queixo levemente para baixo.'], erros: ['Arquear a lombar no alto.', 'Empurrar com a ponta dos pés.'] },
+  panturrilha_em_pe: { passos: ['Fique com os ombros sob as almofadas e as pontas dos pés na borda do degrau.', 'Suba o máximo que puder na ponta dos pés.', 'Desça devagar até os calcanhares ficarem abaixo do degrau.'], dicas: ['Pausa de 1 segundo no alto e embaixo.', 'Joelhos estendidos, sem travar.'], erros: ['Fazer o movimento curto e rápido.', 'Dobrar os joelhos para ajudar.'] },
+  aducao_polia: { passos: ['Prenda a caneleira no tornozelo mais próximo da polia e apoie a mão na máquina.', 'Comece com essa perna afastada para o lado da polia.', 'Puxe a perna cruzando à frente da outra e volte devagar.'], dicas: ['Tronco ereto, sem se inclinar.', 'Faça os dois lados, começando pelo mais fraco.'], erros: ['Balançar o corpo para ajudar.', 'Deixar o peso voltar de uma vez.'] },
+  agachamento_sumo: { passos: ['Afaste bem os pés, com as pontas para fora, e segure um halter com as duas mãos.', 'Desça dobrando os joelhos na direção dos pés, com o tronco ereto.', 'Suba empurrando o chão até ficar em pé.'], dicas: ['Desça até onde conseguir manter o tronco ereto.', 'Solte o ar ao subir.'], erros: ['Deixar os joelhos caírem para dentro.', 'Inclinar o tronco demais para a frente.'] },
+  abducao_polia: { passos: ['Prenda a caneleira no tornozelo mais distante da polia e apoie a mão na máquina.', 'Afaste essa perna para o lado, para longe da polia.', 'Volte devagar até as pernas se juntarem.'], dicas: ['Movimento curto e controlado já trabalha bem o glúteo.', 'Faça os dois lados, começando pelo mais fraco.'], erros: ['Inclinar o tronco para o lado.', 'Girar o pé para fora.'] },
+  abdominal_polia: { passos: ['Ajoelhe de frente para a polia alta e segure a corda ao lado da cabeça.', 'Flexione o tronco levando os cotovelos em direção às coxas.', 'Volte devagar até o tronco ficar ereto.'], dicas: ['Solte o ar ao descer.', 'Pense em enrolar a coluna.'], erros: ['Sentar sobre os calcanhares para ajudar.', 'Puxar a corda com os braços.'] },
+  prancha: { passos: ['Apoie os antebraços no chão, com os cotovelos abaixo dos ombros.', 'Estenda as pernas e fique na ponta dos pés, com o corpo em linha reta.', 'Segure a posição pelo tempo da série, respirando normalmente.'], dicas: ['Contraia o abdômen e o glúteo.', 'Registre os segundos no lugar das repetições.'], erros: ['Deixar o quadril cair ou subir demais.', 'Prender a respiração.'] }
 };
 
 const FOTO_EX = { leg_press: 'legpress', puxada_neutra: 'puxada', mesa_flexora: 'flexora' };
 /* fotos curadas dos exercícios: arquivos de texto fotos-ex-1.js a fotos-ex-4.js no repositório oficial (o teste usa os mesmos, pelo mesmo domínio) */
-const BASE_FOTOS_EX = '/meu-treino/', QTD_FOTOS_EX = 4, VERSAO_FOTOS_EX = '1';
+const BASE_FOTOS_EX = '/meu-treino/', QTD_FOTOS_EX = 5, VERSAO_FOTOS_EX = '1';
 const fotosEx = () => window.FOTOS_EX || {};
 const urlFotoEx = id => fotosEx()[id] || (FOTO_EX[id] && FOTOS[FOTO_EX[id]]) || null;
 function carregarFotosEx() {
@@ -1369,7 +1431,7 @@ const VIDEOS_PADRAO = {
   supino_maquina: 'M-3NZhiypDc',
   remada_aberta: 'BGs-8aVpT3Y',
   leg_press_alto: 'CHRqgc7iXIc',
-  flexora: '_TDeIBSoKzk',
+  flexora: 'G2ejht5MZM0',
   extensao_lombar: 'UAFP97Auvwc',
   adutora: 'lsb18p3cOAk',
   panturrilha_sentado: 'VsFkpRULNwg',
@@ -1377,7 +1439,26 @@ const VIDEOS_PADRAO = {
   gluteo_maquina: 'aG8F1RO-N24',
   elevacao_lateral_halter: 'yURmeIEl1Fg',
   rosca_direta: 'ejoas0rScwo',
-  rosca_inversa: 'POd7l3C_rFE'
+  rosca_inversa: 'POd7l3C_rFE',
+  supino_inclinado_halter: '1lcMaxNgoec',
+  supino_reto_halter: 'ceq2KGuY9Ts',
+  crucifixo_polia: '-uBR4AQpeeQ',
+  crucifixo_halter: 'KBAhS6vPmns',
+  puxada_aberta: '16vOND4Eq20',
+  puxada_articulada: 'xq_Ge3P7NM0',
+  remada_serrote: 'q-G3dUw3E7I',
+  crucifixo_inverso_polia: 'QlhycV-rKAs',
+  face_pull: 'zbNFcAmLdJk',
+  triceps_maquina: 'jmznZ45g8jc',
+  hack: 'kYacj_JafUg',
+  stiff: 'ZTVC_Vj2vhc',
+  elevacao_pelvica: 'EygaKO0sCLk',
+  panturrilha_em_pe: 'dh4z-Qq4uQ0',
+  aducao_polia: 'AeX0gWqffPk',
+  agachamento_sumo: 'xP1wLymF2NE',
+  abducao_polia: 'pogiCCrc5JM',
+  abdominal_polia: 'ajVFDny5NoM',
+  prancha: 'ypA5NH4hqTU'
 };
 /* alternativas do Book: usadas automaticamente quando o vídeo principal não pode tocar dentro do app */
 /* reservas em ordem: o vídeo anterior do Book e a alternativa; usadas sozinhas quando o principal não toca dentro do app */
@@ -1403,7 +1484,7 @@ const VIDEOS_ALT = {
   supino_maquina: ['LPk4vsVWGoM', 'e-F32H5SF6E'],
   remada_aberta: ['xpkNxVSN2ec', 'NHoOrhLr9mc'],
   leg_press_alto: ['Vnb-oj9pB84', 'QcfUX2f0LIU'],
-  flexora: ['ZsNgFL4cfMM'],
+  flexora: ['_TDeIBSoKzk', 'ZsNgFL4cfMM'],
   extensao_lombar: ['hfFVbXJ5UvQ', 'kLcjscPyLqI'],
   adutora: ['JSdgUsiublY', 'FvWoJW4qZQ0'],
   panturrilha_sentado: ['VMF0WZZ_BTU', 'N_bpzfkp0mg'],
@@ -1413,7 +1494,7 @@ const VIDEOS_ALT = {
   rosca_direta: ['CBL8S3q9e60', 'ghl0bfn-hA0'],
   rosca_inversa: ['qGy5g0z3sOs', 'Ys_Iy4ajKps']
 };
-const VIDEOS_VERTICAIS = new Set(['4DwBvjRwYwg', '5NfVgT4CHFQ', '6ml0iz19DPw', 'BGs-8aVpT3Y', 'CHRqgc7iXIc', 'M-3NZhiypDc', 'MxO5joRVQUs', 'MzjQ92Lv9Xk', 'O3rDfWaXhhs', 'POd7l3C_rFE', 'RNxjVs8l55k', 'UAFP97Auvwc', 'VgPf-8vFZkk', 'VsFkpRULNwg', 'aG8F1RO-N24', 'acC6hFJuQPU', 'b_VtMa5S_YU', 'e9wrvK3kcQs', 'eJHyVyKVMZ4', 'eLpfsGNV5nU', 'ejoas0rScwo', 'j7xmT_IqztY', 'jyZlk9qWYDc', 'lsb18p3cOAk', 'sb7dx0Ob9Ig', 'tvPNLsuOulg', 'vgkJb94lK10', 'yURmeIEl1Fg']);
+const VIDEOS_VERTICAIS = new Set(['4DwBvjRwYwg', '5NfVgT4CHFQ', '6ml0iz19DPw', 'BGs-8aVpT3Y', 'CHRqgc7iXIc', 'M-3NZhiypDc', 'MxO5joRVQUs', 'MzjQ92Lv9Xk', 'O3rDfWaXhhs', 'POd7l3C_rFE', 'RNxjVs8l55k', 'UAFP97Auvwc', 'VgPf-8vFZkk', 'VsFkpRULNwg', 'aG8F1RO-N24', 'acC6hFJuQPU', 'b_VtMa5S_YU', 'e9wrvK3kcQs', 'eJHyVyKVMZ4', 'eLpfsGNV5nU', 'ejoas0rScwo', 'j7xmT_IqztY', 'jyZlk9qWYDc', 'lsb18p3cOAk', 'sb7dx0Ob9Ig', 'tvPNLsuOulg', 'vgkJb94lK10', 'yURmeIEl1Fg', 'G2ejht5MZM0', '1lcMaxNgoec', 'ceq2KGuY9Ts', '-uBR4AQpeeQ', 'KBAhS6vPmns', '16vOND4Eq20', 'xq_Ge3P7NM0', 'q-G3dUw3E7I', 'QlhycV-rKAs', 'zbNFcAmLdJk', 'jmznZ45g8jc', 'kYacj_JafUg', 'ZTVC_Vj2vhc', 'EygaKO0sCLk', 'dh4z-Qq4uQ0', 'AeX0gWqffPk', 'xP1wLymF2NE', 'pogiCCrc5JM', 'ajVFDny5NoM', 'ypA5NH4hqTU']);
 let apiYT = null;
 function carregarApiYT() {
   if (apiYT) return apiYT;
@@ -1728,9 +1809,9 @@ async function trocarExercicio(id) {
   const item = itensTreino(s.treino).find(x => x.id === id), original = e.orig || (item && item.orig) || id;
   const ocupados = s.lista.filter(x => x !== id);
   const opcoes = [...new Set([original, ...alternativasDe(original), ...alternativasDe(id)])].filter(k => k !== id && EX[k] && !ocupados.includes(k));
-  if (!opcoes.length) { toast('Ainda não há outro exercício deste grupo na biblioteca'); return; }
+  if (!opcoes.length) { toast('Ainda não há troca para este exercício'); return; }
   const linha = k => `<button class="btn secondary full" style="justify-content:space-between;text-align:left;margin-top:8px" data-r="${k}"><span><strong>${esc(EX[k].nome)}</strong><br><small class="muted">${esc(EX[k].equip)}${k === original ? ' · exercício do programa' : ''}</small></span><span>Escolher</span></button>`;
-  const html = `<h3 style="margin:0 0 4px">Trocar exercício</h3><p class="smalltxt" style="margin:0">Agora: <strong>${esc(nomeEx(id))}</strong>. Opções do mesmo grupo muscular:</p>
+  const html = `<h3 style="margin:0 0 4px">Trocar exercício</h3><p class="smalltxt" style="margin:0">Agora: <strong>${esc(nomeEx(id))}</strong>. Opções equivalentes:</p>
     <div style="max-height:52vh;overflow:auto;text-align:left">${opcoes.map(linha).join('')}</div>
     <label class="row" style="gap:8px;margin-top:12px;justify-content:flex-start;flex-wrap:nowrap;text-align:left"><input type="checkbox" id="troca-sempre" checked style="width:20px;height:20px;flex-shrink:0"><span class="smalltxt" style="margin:0">Manter a troca nos próximos treinos</span></label>`;
   const pendente = modal(html, [['Cancelar', '0', 'secondary']]);
